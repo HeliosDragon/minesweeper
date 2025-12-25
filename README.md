@@ -25,13 +25,13 @@
 
 ## 在线演示
 
-访问 [GitHub Pages 部署链接](https://yourusername.github.io/minesweeper/) 体验游戏。
+访问 [GitHub Pages 部署链接](https://heliosdragon.github.io/minesweeper/) 体验游戏。
 
 ## 本地运行
 
 1. 克隆仓库：
    ```bash
-   git clone https://github.com/yourusername/minesweeper.git
+   git clone https://github.com/heliosdragon/minesweeper.git
    cd minesweeper
    ```
 
@@ -55,9 +55,12 @@ minesweeper/
 │   ├── style.css      # 全局样式
 │   └── game.css       # 游戏网格样式
 ├── js/
-│   ├── utils.js       # 工具函数
-│   ├── game.js        # 游戏核心逻辑
-│   └── ui.js          # 用户界面交互
+│   ├── utils.js       # 工具函数（开发用）
+│   ├── game.js        # 游戏核心逻辑（开发用）
+│   ├── ui.js          # 用户界面交互（开发用）
+│   └── bundle.js      # 打包合并后的脚本（生产用）
+├── assets/
+│   └── icons/         # 图标资源（favicon.ico 等）
 └── README.md          # 说明文档
 ```
 
@@ -68,57 +71,27 @@ minesweeper/
 - **JavaScript (ES6+)**：模块化编程，面向对象设计
 - **GitHub Pages**：静态网站托管
 
-## 部署到 GitHub Pages
-
-### 方法一：使用 `docs` 文件夹
-1. 将本仓库 `minesweeper` 文件夹重命名为 `docs`
-2. 在 GitHub 仓库设置中启用 GitHub Pages，选择 `docs` 文件夹作为源
-
-### 方法二：使用根目录
-1. 将 `minesweeper` 文件夹内所有文件移动到仓库根目录
-2. 在 GitHub 仓库设置中启用 GitHub Pages，选择 `main` 分支根目录
-
-### 方法三：使用 GitHub Actions（推荐）
-1. 在仓库根目录创建 `.github/workflows/deploy.yml`：
-   ```yaml
-   name: Deploy to GitHub Pages
-   on:
-     push:
-       branches: [ main ]
-   jobs:
-     deploy:
-       runs-on: ubuntu-latest
-       steps:
-         - uses: actions/checkout@v3
-         - run: |
-             cd minesweeper
-             # 可选：构建步骤（如压缩）
-         - uses: peaceiris/actions-gh-pages@v3
-           with:
-             github_token: ${{ secrets.GITHUB_TOKEN }}
-             publish_dir: ./minesweeper
-   ```
-2. 推送后会自动部署到 `gh-pages` 分支
-
 ## 开发指南
 
 ### 代码架构
-- `game.js`：游戏核心逻辑，包含 `Game` 类、网格生成、地雷布置、胜负判断
-- `ui.js`：用户界面管理，负责渲染网格、绑定事件、更新状态
-- `utils.js`：通用工具函数（随机数、DOM 操作等）
+- `game.js`：游戏核心逻辑，包含 `Game` 类、网格生成、地雷布置、胜负判断、空白展开、提示系统等。
+- `ui.js`：用户界面管理，负责渲染网格、绑定事件、更新状态、高亮提示等。
+- `utils.js`：通用工具函数（随机数、DOM 操作、防抖节流等）。
+- `bundle.js`：由上述三个源文件合并而成的生产打包文件，用于 `index.html` 直接引用。
+
+### 打包流程
+开发时修改 `utils.js`、`game.js`、`ui.js` 后，需重新生成 `bundle.js`。可使用以下命令（Node.js 环境）：
+```bash
+cd minesweeper
+node -e "const fs = require('fs'); const files = ['js/utils.js', 'js/game.js', 'js/ui.js']; const bundle = files.map(f => fs.readFileSync(f, 'utf8')).join('\n\n'); fs.writeFileSync('js/bundle.js', bundle); console.log('打包完成');"
+```
+或手动复制粘贴三个文件内容到 `bundle.js`。
 
 ### 添加新功能
 1. 在 `game.js` 中扩展 `Game` 类
 2. 在 `ui.js` 中更新 UI 交互
 3. 在 CSS 中添加相应样式
 
-### 测试
-游戏已通过以下测试：
-- 不同难度下的游戏流程
-- 计时器与计数器准确性
-- 提示系统次数限制
-- 响应式布局断点
-- 跨浏览器兼容性（Chrome、Firefox、Safari、Edge）
 
 ## 已知限制
 - 排行榜功能暂未实现（计划在第二阶段添加）
@@ -130,6 +103,17 @@ minesweeper/
 
 ## 许可证
 本项目采用 [MIT 许可证](LICENSE)。
+
+## 更新日志
+
+### v1.1 (2025‑12‑25)
+- **修复空白展开功能**：点击周围无地雷的格子（数字0）现在会自动翻开相邻的所有空白区域。
+- **修复提示功能**：提示按钮现在会正确高亮一个随机的未翻开非地雷格子，并显示脉冲动画。
+- **代码优化**：增加 `onCellRevealed` 和 `onHintApplied` 回调，改进 UI 同步。
+- **调试日志**：在控制台输出关键操作信息，便于问题排查。
+
+### v1.0 (2025‑12‑24)
+- 初始版本发布，包含扫雷核心玩法、三种难度、计时器、提示系统、响应式设计。
 
 ## 致谢
 - 灵感来源于经典 Windows 扫雷游戏
