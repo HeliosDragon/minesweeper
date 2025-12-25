@@ -1,0 +1,411 @@
+/* 主样式 - 扫雷游戏全局布局与主题 */
+
+:root {
+    /* 颜色定义 - 扁平化色调 */
+    --primary: #4a6fa5;
+    --primary-dark: #385d8a;
+    --secondary: #6c757d;
+    --success: #28a745;
+    --danger: #dc3545;
+    --warning: #ffc107;
+    --info: #17a2b8;
+    --light: #f8f9fa;
+    --dark: #343a40;
+    --white: #ffffff;
+    --gray-100: #f8f9fa;
+    --gray-200: #e9ecef;
+    --gray-300: #dee2e6;
+    --gray-400: #ced4da;
+    --gray-500: #adb5bd;
+    --gray-600: #6c757d;
+    --gray-700: #495057;
+    --gray-800: #343a40;
+    --gray-900: #212529;
+
+    /* 边框半径 */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+
+    /* 阴影 */
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.1);
+
+    /* 过渡 */
+    --transition-fast: 150ms ease;
+    --transition-normal: 250ms ease;
+    --transition-slow: 350ms ease;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    background-color: var(--white);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 90vh;
+}
+
+/* 头部样式 */
+.header {
+    background: linear-gradient(90deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: var(--white);
+    padding: 2rem 2rem 1.5rem;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+.header .subtitle {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    font-weight: 300;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* 主游戏区域 */
+.game-area {
+    flex: 1;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* 控制面板 */
+.control-panel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--gray-100);
+    border-radius: var(--radius-md);
+    padding: 1.25rem 2rem;
+    box-shadow: var(--shadow-sm);
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.panel-left,
+.panel-center,
+.panel-right {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.counter {
+    background-color: var(--dark);
+    color: var(--danger);
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    font-size: 1.8rem;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-sm);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 100px;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.counter-label {
+    font-size: 0.8rem;
+    color: var(--gray-400);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 0.25rem;
+}
+
+.counter-value {
+    line-height: 1;
+}
+
+.timer .counter-value {
+    color: var(--success);
+}
+
+.mines-remaining .counter-value {
+    color: var(--danger);
+}
+
+.reset-button {
+    background-color: var(--warning);
+    color: var(--dark);
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    box-shadow: var(--shadow-md);
+    transition: all var(--transition-normal);
+}
+
+.reset-button:hover {
+    background-color: #e0a800;
+    transform: scale(1.05);
+}
+
+.reset-button:active {
+    transform: scale(0.95);
+}
+
+.difficulty-select select {
+    background-color: var(--white);
+    border: 2px solid var(--gray-300);
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    color: var(--gray-800);
+    cursor: pointer;
+    transition: border-color var(--transition-fast);
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%236c757d' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1rem;
+    padding-right: 2.5rem;
+}
+
+.difficulty-select select:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.hint-button {
+    background-color: var(--info);
+    color: var(--white);
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    box-shadow: var(--shadow-md);
+    transition: all var(--transition-normal);
+    position: relative;
+}
+
+.hint-button:hover:not(:disabled) {
+    background-color: #138496;
+    transform: scale(1.05);
+}
+
+.hint-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.hint-count {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: var(--danger);
+    color: var(--white);
+    font-size: 0.9rem;
+    font-weight: bold;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--white);
+}
+
+/* 游戏网格容器 */
+.game-grid-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.grid-wrapper {
+    background-color: var(--gray-200);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-md);
+    overflow: auto;
+    max-width: 100%;
+}
+
+.grid {
+    display: inline-grid;
+    gap: 2px;
+    background-color: var(--gray-400);
+    border: 2px solid var(--gray-500);
+    border-radius: var(--radius-sm);
+    padding: 2px;
+}
+
+.game-status {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--gray-800);
+    text-align: center;
+    padding: 1rem 2rem;
+    background-color: var(--gray-100);
+    border-radius: var(--radius-md);
+    min-width: 300px;
+    transition: background-color var(--transition-fast);
+}
+
+.game-status.win {
+    background-color: rgba(40, 167, 69, 0.2);
+    color: var(--success);
+}
+
+.game-status.lose {
+    background-color: rgba(220, 53, 69, 0.2);
+    color: var(--danger);
+}
+
+/* 说明区域 */
+.instructions {
+    background-color: var(--gray-100);
+    border-radius: var(--radius-md);
+    padding: 1.5rem 2rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.instructions h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.instructions ul {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 0.75rem;
+}
+
+.instructions li {
+    padding-left: 1.5rem;
+    position: relative;
+    color: var(--gray-700);
+    line-height: 1.6;
+}
+
+.instructions li::before {
+    content: '•';
+    color: var(--primary);
+    font-size: 1.5rem;
+    position: absolute;
+    left: 0;
+    top: -2px;
+}
+
+/* 页脚 */
+.footer {
+    background-color: var(--gray-800);
+    color: var(--gray-300);
+    text-align: center;
+    padding: 1.5rem;
+    font-size: 0.9rem;
+    border-top: 1px solid var(--gray-700);
+}
+
+.footer a {
+    color: var(--info);
+    text-decoration: underline;
+    margin-left: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.footer a:hover {
+    color: #17a2b8;
+}
+
+/* 响应式设计 */
+@media (max-width: 992px) {
+    .header h1 {
+        font-size: 2rem;
+    }
+    .control-panel {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .panel-left,
+    .panel-center,
+    .panel-right {
+        justify-content: center;
+        width: 100%;
+    }
+    .instructions ul {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        border-radius: 0;
+        min-height: 100vh;
+        margin: 0;
+    }
+    .game-area {
+        padding: 1.5rem;
+    }
+    .counter {
+        min-width: 80px;
+        font-size: 1.5rem;
+    }
+    .reset-button,
+    .hint-button {
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .header {
+        padding: 1.5rem 1rem 1rem;
+    }
+    .header h1 {
+        font-size: 1.75rem;
+    }
+    .subtitle {
+        font-size: 1rem;
+    }
+    .game-area {
+        padding: 1rem;
+    }
+    .control-panel {
+        padding: 1rem;
+    }
+}

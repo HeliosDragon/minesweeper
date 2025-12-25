@@ -1,0 +1,228 @@
+/* 游戏网格与格子样式 */
+
+.grid {
+    /* 网格尺寸通过JS动态设置 */
+    grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.cell {
+    width: 30px;
+    height: 30px;
+    background-color: #b0bec5;
+    border: 2px solid;
+    border-top-color: #eceff1;
+    border-left-color: #eceff1;
+    border-right-color: #78909c;
+    border-bottom-color: #78909c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.1s ease;
+    position: relative;
+}
+
+.cell:hover {
+    background-color: #90a4ae;
+}
+
+.cell.revealed {
+    background-color: #cfd8dc;
+    border: 1px solid #b0bec5;
+    border-top-color: #b0bec5;
+    border-left-color: #b0bec5;
+    border-right-color: #b0bec5;
+    border-bottom-color: #b0bec5;
+}
+
+.cell.mine {
+    background-color: #f44336;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="18px" height="18px"><path d="M0 0h24v24H0z" fill="none"/><path d="M19 13H5v-2h14v2z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 60%;
+}
+
+.cell.mine.revealed {
+    background-color: #d32f2f;
+}
+
+.cell.flagged {
+    background-color: #ff9800;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="18px" height="18px"><path d="M0 0h24v24H0z" fill="none"/><path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 60%;
+}
+
+.cell.flagged.revealed:not(.mine) {
+    background-color: #ffb74d;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="18px" height="18px"><path d="M0 0h24v24H0z" fill="none"/><path d="M19 13H5v-2h14v2z"/></svg>');
+}
+
+.cell.hinted {
+    animation: pulse 1s infinite;
+    box-shadow: 0 0 10px #ffeb3b;
+    z-index: 1;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 5px #ffeb3b; }
+    50% { box-shadow: 0 0 20px #ffeb3b; }
+    100% { box-shadow: 0 0 5px #ffeb3b; }
+}
+
+/* 数字颜色 */
+.cell.number-1 { color: #1976d2; }
+.cell.number-2 { color: #388e3c; }
+.cell.number-3 { color: #d32f2f; }
+.cell.number-4 { color: #7b1fa2; }
+.cell.number-5 { color: #f57c00; }
+.cell.number-6 { color: #00796b; }
+.cell.number-7 { color: #5d4037; }
+.cell.number-8 { color: #455a64; }
+
+/* 难度相关的格子尺寸 */
+.difficulty-beginner .cell {
+    width: 35px;
+    height: 35px;
+    font-size: 1.1rem;
+}
+
+.difficulty-intermediate .cell {
+    width: 30px;
+    height: 30px;
+    font-size: 1rem;
+}
+
+.difficulty-expert .cell {
+    width: 25px;
+    height: 25px;
+    font-size: 0.9rem;
+}
+
+/* 网格包装器滚动条 */
+.grid-wrapper::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+.grid-wrapper::-webkit-scrollbar-track {
+    background: #cfd8dc;
+    border-radius: 6px;
+}
+
+.grid-wrapper::-webkit-scrollbar-thumb {
+    background: #90a4ae;
+    border-radius: 6px;
+}
+
+.grid-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #78909c;
+}
+
+/* 游戏状态指示器 */
+.game-status {
+    font-size: 1.2rem;
+    padding: 12px 24px;
+    border-radius: 8px;
+    background-color: #e3f2fd;
+    color: #1565c0;
+    transition: all 0.3s ease;
+    border-left: 4px solid #1565c0;
+}
+
+.game-status.win {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    border-left-color: #2e7d32;
+}
+
+.game-status.lose {
+    background-color: #ffebee;
+    color: #c62828;
+    border-left-color: #c62828;
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+    .cell {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+    }
+    .difficulty-beginner .cell {
+        width: 45px;
+        height: 45px;
+    }
+    .difficulty-intermediate .cell {
+        width: 40px;
+        height: 40px;
+    }
+    .difficulty-expert .cell {
+        width: 35px;
+        height: 35px;
+    }
+}
+
+/* 高对比度模式支持 */
+@media (prefers-contrast: high) {
+    .cell {
+        border-width: 2px;
+    }
+    .cell.revealed {
+        background-color: #ffffff;
+        border-color: #000000;
+    }
+    .cell.mine {
+        background-color: #ff0000;
+    }
+    .cell.flagged {
+        background-color: #ffff00;
+    }
+}
+
+/* 超小屏幕优化（手机） */
+@media (max-width: 480px) {
+    .cell {
+        width: 28px;
+        height: 28px;
+        font-size: 0.9rem;
+    }
+    .difficulty-beginner .cell {
+        width: 32px;
+        height: 32px;
+        font-size: 1rem;
+    }
+    .difficulty-intermediate .cell {
+        width: 28px;
+        height: 28px;
+        font-size: 0.9rem;
+    }
+    .difficulty-expert .cell {
+        width: 24px;
+        height: 24px;
+        font-size: 0.8rem;
+    }
+    .grid-wrapper {
+        padding: 0.5rem;
+    }
+    .game-status {
+        font-size: 1rem;
+        padding: 8px 16px;
+    }
+    .counter {
+        min-width: 70px;
+        font-size: 1.4rem;
+        padding: 0.3rem 0.6rem;
+    }
+    .counter-label {
+        font-size: 0.7rem;
+    }
+}

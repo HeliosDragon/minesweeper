@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>扫雷游戏 - Minesweeper</title>
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/game.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="assets/icons/favicon.ico">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1><i class="fas fa-bomb"></i> 扫雷游戏</h1>
+            <p class="subtitle">经典扫雷游戏，现代扁平化设计。挑战你的逻辑与速度！</p>
+        </header>
+
+        <main class="game-area">
+            <section class="control-panel">
+                <div class="panel-left">
+                    <div class="counter mines-remaining">
+                        <span class="counter-label">剩余地雷</span>
+                        <span class="counter-value" id="mines-count">010</span>
+                    </div>
+                </div>
+                <div class="panel-center">
+                    <button class="reset-button" id="reset-btn" title="重新开始">
+                        <i class="fas fa-smile"></i>
+                    </button>
+                    <div class="difficulty-select">
+                        <select id="difficulty-select">
+                            <option value="beginner">初级 (9×9, 10雷)</option>
+                            <option value="intermediate" selected>中级 (16×16, 40雷)</option>
+                            <option value="expert">高级 (16×30, 99雷)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="panel-right">
+                    <div class="counter timer">
+                        <span class="counter-label">时间</span>
+                        <span class="counter-value" id="timer">000</span>
+                    </div>
+                    <button class="hint-button" id="hint-btn" title="提示 (剩余 3 次)">
+                        <i class="fas fa-lightbulb"></i>
+                        <span class="hint-count" id="hint-count">3</span>
+                    </button>
+                </div>
+            </section>
+
+            <section class="game-grid-container">
+                <div class="grid-wrapper">
+                    <div class="grid" id="grid"></div>
+                </div>
+                <div class="game-status" id="game-status">点击格子开始游戏</div>
+            </section>
+
+            <section class="instructions">
+                <h2><i class="fas fa-info-circle"></i> 游戏说明</h2>
+                <ul>
+                    <li><strong>左键点击</strong>：翻开格子。如果格子是地雷，游戏结束。</li>
+                    <li><strong>右键点击</strong>：标记/取消标记地雷（旗帜图标）。</li>
+                    <li><strong>数字</strong>：表示周围8个格子中的地雷数量。</li>
+                    <li><strong>空白格子</strong>：自动展开相邻的安全区域。</li>
+                    <li><strong>提示按钮</strong>：高亮一个可安全点击的格子，每局最多使用3次。</li>
+                    <li><strong>目标</strong>：标记所有地雷并翻开所有安全格子。</li>
+                </ul>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>© 2025 扫雷游戏网页工具 | 部署于 GitHub Pages | 
+                <a href="https://github.com/yourusername/minesweeper" target="_blank"><i class="fab fa-github"></i> 源代码</a>
+            </p>
+        </footer>
+    </div>
+
+    <script src="js/utils.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/ui.js"></script>
+    <script>
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('扫雷游戏加载完成');
+        });
+    </script>
+</body>
+</html>
