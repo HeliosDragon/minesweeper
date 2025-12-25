@@ -5,6 +5,7 @@ import { padZero, createElement, addEventListener } from './utils.js';
 
 export class UI {
     constructor() {
+        console.log('UI 构造函数开始');
         this.game = null;
         this.gridElement = document.getElementById('grid');
         this.minesCountElement = document.getElementById('mines-count');
@@ -15,13 +16,27 @@ export class UI {
         this.hintButton = document.getElementById('hint-btn');
         this.hintCountElement = document.getElementById('hint-count');
         
+        console.log('获取的元素:', {
+            grid: this.gridElement,
+            minesCount: this.minesCountElement,
+            timer: this.timerElement,
+            gameStatus: this.gameStatusElement,
+            resetButton: this.resetButton,
+            difficultySelect: this.difficultySelect,
+            hintButton: this.hintButton,
+            hintCount: this.hintCountElement
+        });
+        
         this.init();
     }
     
     init() {
+        console.log('UI 初始化开始');
         // 创建游戏实例
         const difficulty = this.difficultySelect.value;
+        console.log('难度:', difficulty);
         this.game = new Game(difficulty);
+        console.log('游戏实例创建完成');
         
         // 绑定游戏事件
         this.game.onTimerUpdate = (seconds) => this.updateTimer(seconds);
@@ -42,14 +57,17 @@ export class UI {
         this.updateMinesCount(this.game.minesRemaining);
         this.updateTimer(0);
         this.updateHintCount(0);
+        console.log('开始渲染网格');
         this.renderGrid();
         this.updateGameStatus('点击格子开始游戏');
+        console.log('UI 初始化完成');
     }
     
     /**
      * 渲染整个网格
      */
     renderGrid() {
+        console.log(`渲染网格: ${this.game.rows}行 ${this.game.cols}列`);
         this.gridElement.innerHTML = '';
         this.gridElement.style.gridTemplateColumns = `repeat(${this.game.cols}, 1fr)`;
         
@@ -63,6 +81,7 @@ export class UI {
                 this.gridElement.appendChild(cellElement);
             }
         }
+        console.log(`网格渲染完成，共 ${this.game.rows * this.game.cols} 个格子`);
     }
     
     /**
@@ -87,21 +106,21 @@ export class UI {
         }
         
         // 事件监听
-        addEventListener(cellElement, 'click', (e) => {
+        cellElement.addEventListener('click', (e) => {
             e.preventDefault();
             this.handleCellClick(cell.row, cell.col, false);
-        });
+        }, { passive: false });
         
-        addEventListener(cellElement, 'contextmenu', (e) => {
+        cellElement.addEventListener('contextmenu', (e) => {
             e.preventDefault();
             this.handleCellClick(cell.row, cell.col, true);
-        });
+        }, { passive: false });
         
         // 触摸事件支持
-        addEventListener(cellElement, 'touchstart', (e) => {
+        cellElement.addEventListener('touchstart', (e) => {
             e.preventDefault();
             this.handleTouchStart(cell.row, cell.col, e);
-        });
+        }, { passive: false });
         
         return cellElement;
     }
@@ -110,6 +129,7 @@ export class UI {
      * 处理格子点击
      */
     handleCellClick(row, col, isRightClick) {
+        console.log(`点击格子 (${row}, ${col})，右键: ${isRightClick}`);
         if (isRightClick) {
             this.game.handleCellRightClick(row, col);
         } else {
