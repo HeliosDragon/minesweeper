@@ -1,7 +1,7 @@
 /* 游戏核心逻辑模块 */
 
-import { randomUniqueIndices, padZero, NEIGHBOR_OFFSETS } from './utils.js';
-import { addGameRecord } from './stats.js';
+// 工具函数已在全局作用域中定义（由 utils.js 和 stats.js 提供）
+// 直接使用全局变量 randomUniqueIndices, padZero, NEIGHBOR_OFFSETS, addGameRecord
 
 // 难度配置
 const DIFFICULTIES = {
@@ -36,7 +36,7 @@ const CellType = {
 /**
  * 游戏核心类
  */
-export class Game {
+class Game {
     constructor(difficulty = 'intermediate') {
         this.difficulty = difficulty;
         this.config = DIFFICULTIES[difficulty];
@@ -230,12 +230,15 @@ export class Game {
      * 递归翻开周围空白格子
      */
     revealNeighbors(row, col) {
+        console.log('NEIGHBOR_OFFSETS', NEIGHBOR_OFFSETS);
         const stack = [[row, col]];
         const visited = new Set();
         visited.add(`${row},${col}`);
         
         while (stack.length > 0) {
+            console.log('stack size', stack.length);
             const [r, c] = stack.pop();
+            console.log(`processing (${r}, ${c})`);
             for (const [dr, dc] of NEIGHBOR_OFFSETS) {
                 const nr = r + dr;
                 const nc = c + dc;
@@ -243,11 +246,14 @@ export class Game {
                 if (nr >= 0 && nr < this.rows && nc >= 0 && nc < this.cols && !visited.has(key)) {
                     visited.add(key);
                     const cell = this.grid[nr][nc];
+                    console.log(`neighbor (${nr}, ${nc}) state=${cell.state}, type=${cell.type}, neighborMines=${cell.neighborMines}`);
                     if (cell.state === CellState.HIDDEN && cell.type !== CellType.MINE) {
                         cell.state = CellState.REVEALED;
                         this.revealedCount++;
+                        console.log(`revealed (${nr}, ${nc})`);
                         if (cell.neighborMines === 0) {
                             stack.push([nr, nc]);
+                            console.log(`pushed to stack (${nr}, ${nc})`);
                         }
                     }
                 }
@@ -424,4 +430,14 @@ export class Game {
 }
 
 // 导出配置
-export { DIFFICULTIES, GameState, CellState, CellType };
+
+// 非模块环境下的全局暴露（用于 bundle.js）
+if (typeof window !== 'undefined') {
+    window.MinesweeperGame = {
+        Game,
+        DIFFICULTIES,
+        GameState,
+        CellState,
+        CellType
+    };
+}

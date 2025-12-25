@@ -3,14 +3,14 @@
 /**
  * 生成 min 到 max 之间的随机整数（包含两端）
  */
-export function randomInt(min, max) {
+function randomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 /**
  * 从数组中随机选择一个元素
  */
-export function randomChoice(array) {
+function randomChoice(array) {
     return array[randomInt(0, array.length - 1)];
 }
 
@@ -20,7 +20,7 @@ export function randomChoice(array) {
  * @param {number} max 最大索引（0~max-1）
  * @returns {number[]} 不重复的索引数组
  */
-export function randomUniqueIndices(count, max) {
+function randomUniqueIndices(count, max) {
     if (count > max) {
         throw new Error(`count (${count}) cannot be greater than max (${max})`);
     }
@@ -34,7 +34,7 @@ export function randomUniqueIndices(count, max) {
 /**
  * 深度复制二维数组
  */
-export function deepCopy2D(grid) {
+function deepCopy2D(grid) {
     return grid.map(row => [...row]);
 }
 
@@ -43,14 +43,14 @@ export function deepCopy2D(grid) {
  * @param {number} num 数字
  * @param {number} digits 位数
  */
-export function padZero(num, digits = 3) {
+function padZero(num, digits = 3) {
     return String(num).padStart(digits, '0');
 }
 
 /**
  * 防抖函数
  */
-export function debounce(func, delay) {
+function debounce(func, delay) {
     let timeoutId;
     return (...args) => {
         clearTimeout(timeoutId);
@@ -61,7 +61,7 @@ export function debounce(func, delay) {
 /**
  * 节流函数
  */
-export function throttle(func, limit) {
+function throttle(func, limit) {
     let inThrottle;
     return (...args) => {
         if (!inThrottle) {
@@ -75,14 +75,14 @@ export function throttle(func, limit) {
 /**
  * 检测移动设备
  */
-export function isMobile() {
+function isMobile() {
     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 }
 
 /**
  * 添加事件监听器，支持 passive 选项
  */
-export function addEventListener(el, event, handler, options = {}) {
+function addEventListener(el, event, handler, options = {}) {
     const passive = options.passive ?? true;
     el.addEventListener(event, handler, { passive, ...options });
     return () => el.removeEventListener(event, handler, { passive, ...options });
@@ -91,7 +91,7 @@ export function addEventListener(el, event, handler, options = {}) {
 /**
  * 创建 DOM 元素
  */
-export function createElement(tag, className, attributes = {}) {
+function createElement(tag, className, attributes = {}) {
     const el = document.createElement(tag);
     if (className) {
         if (Array.isArray(className)) {
@@ -109,8 +109,25 @@ export function createElement(tag, className, attributes = {}) {
 /**
  * 获取相邻格子的偏移量（8方向）
  */
-export const NEIGHBOR_OFFSETS = [
+const NEIGHBOR_OFFSETS = [
     [-1, -1], [-1, 0], [-1, 1],
     [0, -1],           [0, 1],
     [1, -1],  [1, 0],  [1, 1]
 ];
+
+// 非模块环境下的全局暴露（用于 bundle.js）
+if (typeof window !== 'undefined') {
+    window.MinesweeperUtils = {
+        randomInt,
+        randomChoice,
+        randomUniqueIndices,
+        deepCopy2D,
+        padZero,
+        debounce,
+        throttle,
+        isMobile,
+        addEventListener,
+        createElement,
+        NEIGHBOR_OFFSETS
+    };
+}

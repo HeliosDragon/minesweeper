@@ -22,6 +22,7 @@
 - **响应式设计**：完美适配桌面、平板和手机
 - **触摸支持**：移动设备上长按模拟右键
 - **无障碍支持**：键盘导航、高对比度模式
+- **游戏数据统计**：记录玩家的胜负记录、连胜/连败、最佳用时等统计信息，支持按难度查看。
 
 ## 在线演示
 
@@ -58,6 +59,7 @@ minesweeper/
 │   ├── utils.js       # 工具函数（开发用）
 │   ├── game.js        # 游戏核心逻辑（开发用）
 │   ├── ui.js          # 用户界面交互（开发用）
+│   ├── stats.js       # 游戏数据统计模块（开发用）
 │   └── bundle.js      # 打包合并后的脚本（生产用）
 ├── assets/
 │   └── icons/         # 图标资源（favicon.ico 等）
@@ -77,15 +79,16 @@ minesweeper/
 - `game.js`：游戏核心逻辑，包含 `Game` 类、网格生成、地雷布置、胜负判断、空白展开、提示系统等。
 - `ui.js`：用户界面管理，负责渲染网格、绑定事件、更新状态、高亮提示等。
 - `utils.js`：通用工具函数（随机数、DOM 操作、防抖节流等）。
-- `bundle.js`：由上述三个源文件合并而成的生产打包文件，用于 `index.html` 直接引用。
+- `stats.js`：游戏数据统计模块，负责记录玩家成绩、计算胜率、连胜/连败、最佳用时等统计数据。
+- `bundle.js`：由上述四个源文件合并而成的生产打包文件，用于 `index.html` 直接引用。
 
 ### 打包流程
-开发时修改 `utils.js`、`game.js`、`ui.js` 后，需重新生成 `bundle.js`。可使用以下命令（Node.js 环境）：
+开发时修改 `utils.js`、`game.js`、`ui.js`、`stats.js` 后，需重新生成 `bundle.js`。可使用以下命令（Node.js 环境）：
 ```bash
 cd minesweeper
-node -e "const fs = require('fs'); const files = ['js/utils.js', 'js/game.js', 'js/ui.js']; const bundle = files.map(f => fs.readFileSync(f, 'utf8')).join('\n\n'); fs.writeFileSync('js/bundle.js', bundle); console.log('打包完成');"
+node -e "const fs = require('fs'); const files = ['js/utils.js', 'js/game.js', 'js/ui.js', 'js/stats.js']; const bundle = files.map(f => fs.readFileSync(f, 'utf8')).join('\n\n'); fs.writeFileSync('js/bundle.js', bundle); console.log('打包完成');"
 ```
-或手动复制粘贴三个文件内容到 `bundle.js`。
+或手动复制粘贴四个文件内容到 `bundle.js`。
 
 ### 添加新功能
 1. 在 `game.js` 中扩展 `Game` 类
@@ -94,7 +97,7 @@ node -e "const fs = require('fs'); const files = ['js/utils.js', 'js/game.js', '
 
 
 ## 已知限制
-- 排行榜功能暂未实现（计划在第二阶段添加）
+- 排行榜功能（全站排名）暂未实现（计划在第二阶段添加）
 - 不支持保存游戏进度
 - 音效和高级动画待增强
 
@@ -105,6 +108,12 @@ node -e "const fs = require('fs'); const files = ['js/utils.js', 'js/game.js', '
 本项目采用 [MIT 许可证](LICENSE)。
 
 ## 更新日志
+
+### v1.3 (2025‑12‑25)
+- **新增游戏数据统计**：记录玩家的胜负记录、连胜/连败、最佳用时等统计数据，支持按难度查看。
+- **统计展示 UI**：在游戏区域下方新增统计面板，默认显示连胜/连败和最佳用时，点击“详细统计”可展开完整数据。
+- **本地存储**：使用 localStorage 保存最多1000条游戏记录，跨浏览器会话持久化。
+- **代码重构**：新增 `stats.js` 模块，集成到打包流程；优化空白展开算法，修复 UI 刷新问题。
 
 ### v1.1 (2025‑12‑25)
 - **修复空白展开功能**：点击周围无地雷的格子（数字0）现在会自动翻开相邻的所有空白区域。

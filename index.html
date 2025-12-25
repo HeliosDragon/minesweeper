@@ -59,41 +59,54 @@
 
             <section class="stats-panel">
                 <h2><i class="fas fa-chart-line"></i> 游戏统计</h2>
-                <div class="stats-content">
-                    <div class="stats-row">
-                        <span class="stats-label">当前难度:</span>
-                        <span class="stats-value" id="stats-difficulty">中级</span>
-                    </div>
-                    <div class="stats-row">
-                        <span class="stats-label">总场次:</span>
-                        <span class="stats-value" id="stats-total">0</span>
-                    </div>
-                    <div class="stats-row">
-                        <span class="stats-label">胜率:</span>
-                        <span class="stats-value" id="stats-win-rate">0%</span>
-                    </div>
-                    <div class="stats-row">
+                <div class="stats-summary">
+                    <div class="stats-summary-row">
                         <span class="stats-label">当前连胜/连败:</span>
-                        <span class="stats-value" id="stats-streak">无记录</span>
+                        <span class="stats-value" id="stats-streak-summary">无记录</span>
                     </div>
-                    <div class="stats-row">
-                        <span class="stats-label">最长连胜:</span>
-                        <span class="stats-value" id="stats-max-streak">0</span>
-                    </div>
-                    <div class="stats-row">
-                        <span class="stats-label">最长连败:</span>
-                        <span class="stats-value" id="stats-max-losing-streak">0</span>
-                    </div>
-                    <div class="stats-row">
+                    <div class="stats-summary-row">
                         <span class="stats-label">最佳用时:</span>
-                        <span class="stats-value" id="stats-best-time">--:--</span>
+                        <span class="stats-value" id="stats-best-time-summary">--:--</span>
                     </div>
-                    <div class="stats-row">
-                        <span class="stats-label">平均用时:</span>
-                        <span class="stats-value" id="stats-avg-time">--:--</span>
-                    </div>
+                    <button class="stats-toggle" id="stats-toggle-btn">详细统计</button>
                 </div>
-                <button class="stats-reset" id="stats-reset-btn">清空统计</button>
+                <div class="stats-details" id="stats-details" style="display: none;">
+                    <div class="stats-content">
+                        <div class="stats-row">
+                            <span class="stats-label">当前难度:</span>
+                            <span class="stats-value" id="stats-difficulty">中级</span>
+                        </div>
+                        <div class="stats-row">
+                            <span class="stats-label">总场次:</span>
+                            <span class="stats-value" id="stats-total">0</span>
+                        </div>
+                        <div class="stats-row">
+                            <span class="stats-label">胜率:</span>
+                            <span class="stats-value" id="stats-win-rate">0%</span>
+                        </div>
+                        <div class="stats-row">
+                            <span class="stats-label">当前连胜/连败:</span>
+                            <span class="stats-value" id="stats-streak">无记录</span>
+                        </div>
+                        <div class="stats-row">
+                            <span class="stats-label">最长连胜:</span>
+                            <span class="stats-value" id="stats-max-streak">0</span>
+                        </div>
+                        <div class="stats-row">
+                            <span class="stats-label">最长连败:</span>
+                            <span class="stats-value" id="stats-max-losing-streak">0</span>
+                        </div>
+                        <div class="stats-row">
+                            <span class="stats-label">最佳用时:</span>
+                            <span class="stats-value" id="stats-best-time">--:--</span>
+                        </div>
+                        <div class="stats-row">
+                            <span class="stats-label">平均用时:</span>
+                            <span class="stats-value" id="stats-avg-time">--:--</span>
+                        </div>
+                    </div>
+                    <button class="stats-reset" id="stats-reset-btn">清空统计</button>
+                </div>
             </section>
 
             <section class="instructions">
@@ -116,6 +129,9 @@
         </footer>
     </div>
 
-    <script type="module" src="js/bundle.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/stats.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/ui.js"></script>
 </body>
 </html>

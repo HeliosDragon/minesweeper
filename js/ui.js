@@ -1,10 +1,9 @@
 /* 用户界面模块 */
 
-import { Game, DIFFICULTIES, GameState, CellState, CellType } from './game.js';
-import { padZero, createElement, addEventListener } from './utils.js';
-import { getStats, formatTime, formatStreak, clearGameRecords } from './stats.js';
+// 游戏和工具函数已在全局作用域中定义（由 game.js, utils.js, stats.js 提供）
+// 直接使用全局变量 Game, DIFFICULTIES, GameState, CellState, CellType, padZero, createElement, addEventListener, getStats, formatTime, formatStreak, clearGameRecords
 
-export class UI {
+class UI {
     constructor() {
         console.log('UI 构造函数开始');
         this.game = null;
@@ -38,6 +37,11 @@ export class UI {
         this.statsBestTimeElement = document.getElementById('stats-best-time');
         this.statsAvgTimeElement = document.getElementById('stats-avg-time');
         this.statsResetButton = document.getElementById('stats-reset-btn');
+        // 摘要元素
+        this.statsStreakSummaryElement = document.getElementById('stats-streak-summary');
+        this.statsBestTimeSummaryElement = document.getElementById('stats-best-time-summary');
+        this.statsToggleBtn = document.getElementById('stats-toggle-btn');
+        this.statsDetailsElement = document.getElementById('stats-details');
         
         this.init();
     }
@@ -66,6 +70,7 @@ export class UI {
         });
         this.hintButton.addEventListener('click', () => this.game.handleHint());
         this.statsResetButton.addEventListener('click', () => this.clearStats());
+        this.statsToggleBtn.addEventListener('click', () => this.toggleStatsDetails());
         
         // 初始化UI
         this.updateMinesCount(this.game.minesRemaining);
@@ -150,7 +155,7 @@ export class UI {
         } else {
             this.game.handleCellClick(row, col);
         }
-        this.updateCellUI(row, col);
+        this.renderGrid(); // 重新渲染整个网格以确保所有被揭示的格子都更新
         this.updateGameStatus();
     }
     
@@ -396,6 +401,9 @@ export class UI {
         this.statsMaxLosingStreakElement.textContent = stats.maxLosingStreak;
         this.statsBestTimeElement.textContent = stats.bestTime > 0 ? formatTime(stats.bestTime) : '--:--';
         this.statsAvgTimeElement.textContent = stats.averageTime > 0 ? formatTime(stats.averageTime) : '--:--';
+        // 更新摘要显示
+        this.statsStreakSummaryElement.textContent = formatStreak(stats.currentStreak);
+        this.statsBestTimeSummaryElement.textContent = stats.bestTime > 0 ? formatTime(stats.bestTime) : '--:--';
     }
 
     /**
@@ -406,6 +414,20 @@ export class UI {
             clearGameRecords();
             this.updateStatsDisplay();
             alert('统计记录已清空。');
+        }
+    }
+
+    /**
+     * 切换统计详细信息显示
+     */
+    toggleStatsDetails() {
+        const details = this.statsDetailsElement;
+        if (details.style.display === 'none') {
+            details.style.display = 'block';
+            this.statsToggleBtn.textContent = '隐藏统计';
+        } else {
+            details.style.display = 'none';
+            this.statsToggleBtn.textContent = '详细统计';
         }
     }
 }

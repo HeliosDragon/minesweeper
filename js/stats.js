@@ -16,7 +16,7 @@ const MAX_RECORDS = 1000; // 最多保存的记录数
  * 获取所有游戏记录
  * @returns {GameRecord[]}
  */
-export function getGameRecords() {
+function getGameRecords() {
     try {
         const data = localStorage.getItem(STORAGE_KEY);
         if (!data) return [];
@@ -34,7 +34,7 @@ export function getGameRecords() {
  * @param {boolean} win - 是否胜利
  * @param {number} time - 游戏用时（秒）
  */
-export function addGameRecord(difficulty, win, time) {
+function addGameRecord(difficulty, win, time) {
     const records = getGameRecords();
     const record = {
         timestamp: Date.now(),
@@ -59,7 +59,7 @@ export function addGameRecord(difficulty, win, time) {
 /**
  * 清空所有游戏记录
  */
-export function clearGameRecords() {
+function clearGameRecords() {
     localStorage.removeItem(STORAGE_KEY);
 }
 
@@ -82,7 +82,7 @@ export function clearGameRecords() {
  * @param {string} difficulty - 难度 ('beginner', 'intermediate', 'expert')，或 'all' 表示全部难度
  * @returns {DifficultyStats}
  */
-export function getStats(difficulty = 'all') {
+function getStats(difficulty = 'all') {
     const records = getGameRecords();
     let filtered = records;
     if (difficulty !== 'all') {
@@ -161,7 +161,7 @@ export function getStats(difficulty = 'all') {
  * 获取所有难度的统计摘要
  * @returns {Object.<string, DifficultyStats>}
  */
-export function getAllDifficultyStats() {
+function getAllDifficultyStats() {
     const difficulties = ['beginner', 'intermediate', 'expert', 'all'];
     const result = {};
     for (const diff of difficulties) {
@@ -175,7 +175,7 @@ export function getAllDifficultyStats() {
  * @param {number} seconds 
  * @returns {string}
  */
-export function formatTime(seconds) {
+function formatTime(seconds) {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
@@ -186,14 +186,14 @@ export function formatTime(seconds) {
  * @param {number} streak 
  * @returns {string}
  */
-export function formatStreak(streak) {
+function formatStreak(streak) {
     if (streak > 0) return `${streak} 连胜`;
     if (streak < 0) return `${-streak} 连败`;
     return '无记录';
 }
 
-// 导出默认对象（可选）
-export default {
+// 全局暴露
+window.MinesweeperStats = {
     getGameRecords,
     addGameRecord,
     clearGameRecords,
