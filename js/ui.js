@@ -15,6 +15,12 @@ class UI {
         this.difficultySelect = document.getElementById('difficulty-select');
         this.hintButton = document.getElementById('hint-btn');
         this.hintCountElement = document.getElementById('hint-count');
+        this.streakCounterElement = document.getElementById('streak-counter');
+        
+        // 创建连胜图标元素
+        this.streakIconElement = document.createElement('i');
+        this.streakIconElement.classList.add('fas');
+        this.streakCounterElement.parentNode.appendChild(this.streakIconElement);
         
         console.log('获取的元素:', {
             grid: this.gridElement,
@@ -386,6 +392,7 @@ class UI {
     updateStatsDisplay() {
         const difficulty = this.game.difficulty;
         const stats = getStats(difficulty);
+        console.log('更新统计显示: currentStreak =', stats.currentStreak, 'abs =', Math.abs(stats.currentStreak));
         
         // 难度显示名称映射
         const difficultyNames = {
@@ -402,8 +409,32 @@ class UI {
         this.statsBestTimeElement.textContent = stats.bestTime > 0 ? formatTime(stats.bestTime) : '--:--';
         this.statsAvgTimeElement.textContent = stats.averageTime > 0 ? formatTime(stats.averageTime) : '--:--';
         // 更新摘要显示
+        console.log('formatStreak:', stats.currentStreak, '->', formatStreak(stats.currentStreak));
         this.statsStreakSummaryElement.textContent = formatStreak(stats.currentStreak);
         this.statsBestTimeSummaryElement.textContent = stats.bestTime > 0 ? formatTime(stats.bestTime) : '--:--';
+        // 更新连胜计数器
+        if (this.streakCounterElement) {
+            const absStreak = Math.abs(stats.currentStreak);
+            this.streakCounterElement.textContent = absStreak;
+            // 根据正负设置颜色类
+            this.streakCounterElement.parentElement.classList.remove('positive', 'negative');
+            if (stats.currentStreak > 0) {
+                this.streakCounterElement.parentElement.classList.add('positive');
+                // 设置图标为奖杯
+                console.log('设置奖杯图标');
+                this.streakIconElement.className = 'fas fa-trophy';
+                this.streakIconElement.style.opacity = '1';
+            } else if (stats.currentStreak < 0) {
+                this.streakCounterElement.parentElement.classList.add('negative');
+                // 设置图标为拇指朝下
+                console.log('设置拇指朝下图标');
+                this.streakIconElement.className = 'fas fa-thumbs-down';
+                this.streakIconElement.style.opacity = '1';
+            } else {
+                // 无连胜/连败，隐藏图标
+                this.streakIconElement.style.opacity = '0';
+            }
+        }
     }
 
     /**

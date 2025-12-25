@@ -118,14 +118,12 @@ function getStats(difficulty = 'all') {
     // 当前连胜/连败：从最新记录开始往前追溯
     if (sorted.length > 0) {
         let streak = 0;
-        let isWin = null;
+        const firstWin = sorted[sorted.length - 1].win;
         // 逆序遍历
         for (let i = sorted.length - 1; i >= 0; i--) {
             const win = sorted[i].win;
-            if (isWin === null) {
-                isWin = win;
-                streak = win ? 1 : -1;
-            } else if ((win && isWin > 0) || (!win && isWin < 0)) {
+            if (win === firstWin) {
+                // 与最新记录结果类型相同
                 streak += win ? 1 : -1;
             } else {
                 break;
@@ -187,9 +185,14 @@ function formatTime(seconds) {
  * @returns {string}
  */
 function formatStreak(streak) {
-    if (streak > 0) return `${streak} 连胜`;
-    if (streak < 0) return `${-streak} 连败`;
-    return '无记录';
+    console.log('formatStreak called with streak:', streak);
+    if (streak > 0) {
+        return `${streak} 连胜`;
+    } else if (streak < 0) {
+        return `${-streak} 连败`;
+    } else {
+        return '无记录';
+    }
 }
 
 // 全局暴露

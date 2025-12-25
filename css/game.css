@@ -12,12 +12,12 @@
 .cell {
     width: 30px;
     height: 30px;
-    background-color: #b0bec5;
+    background-color: var(--gray-300);
     border: 2px solid;
-    border-top-color: #eceff1;
-    border-left-color: #eceff1;
-    border-right-color: #78909c;
-    border-bottom-color: #78909c;
+    border-top-color: var(--gray-100);
+    border-left-color: var(--gray-100);
+    border-right-color: var(--gray-500);
+    border-bottom-color: var(--gray-500);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -29,24 +29,32 @@
 }
 
 .cell:hover {
-    background-color: #90a4ae;
+    background-color: var(--gray-400);
 }
 
 .cell.revealed {
-    background-color: #cfd8dc;
-    border: 1px solid #b0bec5;
-    border-top-color: #b0bec5;
-    border-left-color: #b0bec5;
-    border-right-color: #b0bec5;
-    border-bottom-color: #b0bec5;
+    background-color: var(--gray-200);
+    border: 1px solid var(--gray-400);
+    border-top-color: var(--gray-400);
+    border-left-color: var(--gray-400);
+    border-right-color: var(--gray-400);
+    border-bottom-color: var(--gray-400);
 }
 
 .cell.mine {
     background-color: #f44336;
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="18px" height="18px"><path d="M0 0h24v24H0z" fill="none"/><path d="M19 13H5v-2h14v2z"/></svg>');
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: 60%;
+    position: relative;
+}
+.cell.mine::after {
+    content: "\f1e2"; /* Font Awesome bomb icon */
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    color: white;
+    font-size: 16px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
 .cell.mine.revealed {
@@ -131,23 +139,23 @@
 .game-status {
     font-size: 1.2rem;
     padding: 12px 24px;
-    border-radius: 8px;
-    background-color: #e3f2fd;
-    color: #1565c0;
-    transition: all 0.3s ease;
-    border-left: 4px solid #1565c0;
+    border-radius: var(--radius-md);
+    background-color: var(--gray-100);
+    color: var(--primary);
+    transition: all var(--transition-fast);
+    border-left: 4px solid var(--primary);
 }
 
 .game-status.win {
-    background-color: #e8f5e9;
-    color: #2e7d32;
-    border-left-color: #2e7d32;
+    background-color: rgba(52, 199, 89, 0.1);
+    color: var(--success);
+    border-left-color: var(--success);
 }
 
 .game-status.lose {
-    background-color: #ffebee;
-    color: #c62828;
-    border-left-color: #c62828;
+    background-color: rgba(255, 59, 48, 0.1);
+    color: var(--danger);
+    border-left-color: var(--danger);
 }
 
 /* 触摸设备优化 */
@@ -230,11 +238,11 @@
 /* 统计面板样式 */
 .stats-panel {
     margin: 1.5rem auto;
-    padding: 1.2rem;
-    background-color: #f5f7fa;
-    border-radius: 12px;
-    border: 2px solid #dce1e9;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    padding: 1.5rem;
+    background-color: var(--white);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--gray-200);
+    box-shadow: var(--shadow-md);
     max-width: 800px;
 }
 
@@ -243,44 +251,44 @@
     align-items: center;
     gap: 0.5rem;
     margin-top: 0;
-    margin-bottom: 1rem;
-    font-size: 1.3rem;
-    color: #2c3e50;
-    border-bottom: 2px solid #3498db;
-    padding-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
+    font-size: 1.4rem;
+    color: var(--gray-800);
+    border-bottom: 2px solid var(--primary);
+    padding-bottom: 0.75rem;
 }
 
 .stats-content {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 0.8rem;
-    margin-bottom: 1.2rem;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
 }
 
 .stats-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.6rem 0.8rem;
-    background-color: white;
-    border-radius: 8px;
-    border: 1px solid #e1e8ed;
-    transition: background-color 0.2s;
+    padding: 0.75rem 1rem;
+    background-color: var(--white);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--gray-200);
+    transition: background-color var(--transition-fast);
 }
 
 .stats-row:hover {
-    background-color: #f8f9fa;
+    background-color: var(--gray-100);
 }
 
 .stats-label {
     font-weight: 600;
-    color: #5a6c7d;
+    color: var(--gray-700);
     font-size: 0.95rem;
 }
 
 .stats-value {
     font-weight: 700;
-    color: #2c3e50;
+    color: var(--gray-800);
     font-size: 1rem;
     text-align: right;
     min-width: 4em;
@@ -323,11 +331,11 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 10px;
-    padding: 10px;
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    border: 1px solid #dee2e6;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background-color: var(--gray-100);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--gray-300);
 }
 .stats-summary-row {
     display: flex;
