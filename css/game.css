@@ -226,3 +226,95 @@
         font-size: 0.7rem;
     }
 }
+
+/* 统计面板样式 */
+.stats-panel {
+    margin: 1.5rem auto;
+    padding: 1.2rem;
+    background-color: #f5f7fa;
+    border-radius: 12px;
+    border: 2px solid #dce1e9;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    max-width: 800px;
+}
+
+.stats-panel h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+    color: #2c3e50;
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 0.5rem;
+}
+
+.stats-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.8rem;
+    margin-bottom: 1.2rem;
+}
+
+.stats-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.6rem 0.8rem;
+    background-color: white;
+    border-radius: 8px;
+    border: 1px solid #e1e8ed;
+    transition: background-color 0.2s;
+}
+
+.stats-row:hover {
+    background-color: #f8f9fa;
+}
+
+.stats-label {
+    font-weight: 600;
+    color: #5a6c7d;
+    font-size: 0.95rem;
+}
+
+.stats-value {
+    font-weight: 700;
+    color: #2c3e50;
+    font-size: 1rem;
+    text-align: right;
+    min-width: 4em;
+}
+
+.stats-reset {
+    display: block;
+    margin: 0 auto;
+    padding: 0.6rem 1.5rem;
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.stats-reset:hover {
+    background-color: #c0392b;
+    transform: translateY(-2px);
+}
+
+.stats-reset:active {
+    transform: translateY(0);
+}
+
+@media (max-width: 600px) {
+    .stats-content {
+        grid-template-columns: 1fr;
+    }
+    .stats-panel {
+        padding: 1rem;
+        margin: 1rem auto;
+    }
+}

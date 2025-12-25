@@ -2,6 +2,7 @@
 
 import { Game, DIFFICULTIES, GameState, CellState, CellType } from './game.js';
 import { padZero, createElement, addEventListener } from './utils.js';
+import { getStats, formatTime, formatStreak, clearGameRecords } from './stats.js';
 
 export class UI {
     constructor() {
@@ -27,6 +28,17 @@ export class UI {
             hintCount: this.hintCountElement
         });
         
+        // 统计面板元素
+        this.statsDifficultyElement = document.getElementById('stats-difficulty');
+        this.statsTotalElement = document.getElementById('stats-total');
+        this.statsWinRateElement = document.getElementById('stats-win-rate');
+        this.statsStreakElement = document.getElementById('stats-streak');
+        this.statsMaxStreakElement = document.getElementById('stats-max-streak');
+        this.statsMaxLosingStreakElement = document.getElementById('stats-max-losing-streak');
+        this.statsBestTimeElement = document.getElementById('stats-best-time');
+        this.statsAvgTimeElement = document.getElementById('stats-avg-time');
+        this.statsResetButton = document.getElementById('stats-reset-btn');
+        
         this.init();
     }
     
@@ -50,8 +62,10 @@ export class UI {
         this.difficultySelect.addEventListener('change', (e) => {
             this.game.handleDifficultyChange(e.target.value);
             this.renderGrid();
+            this.updateStatsDisplay(); // 难度切换时更新统计
         });
         this.hintButton.addEventListener('click', () => this.game.handleHint());
+        this.statsResetButton.addEventListener('click', () => this.clearStats());
         
         // 初始化UI
         this.updateMinesCount(this.game.minesRemaining);
@@ -60,6 +74,7 @@ export class UI {
         console.log('开始渲染网格');
         this.renderGrid();
         this.updateGameStatus('点击格子开始游戏');
+        this.updateStatsDisplay(); // 初始显示统计
         console.log('UI 初始化完成');
     }
     
@@ -306,6 +321,9 @@ export class UI {
         if (win) {
             this.showConfetti();
         }
+        
+        // 更新统计信息
+        this.updateStatsDisplay();
     }
     
     /**
@@ -354,6 +372,40 @@ export class UI {
                 }
             `;
             document.head.appendChild(style);
+        }
+    }
+
+    /**
+     * 更新统计信息显示
+     */
+    updateStatsDisplay() {
+        const difficulty = this.game.difficulty;
+        const stats = getStats(difficulty);
+        
+        // 难度显示名称映射
+        const difficultyNames = {
+            beginner: '初级',
+            intermediate: '中级',
+            expert: '高级'
+        };
+        this.statsDifficultyElement.textContent = difficultyNames[difficulty] || difficulty;
+        this.statsTotalElement.textContent = stats.total;
+        this.statsWinRateElement.textContent = `${stats.winRate}%`;
+        this.statsStreakElement.textContent = formatStreak(stats.currentStreak);
+        this.statsMaxStreakElement.textContent = stats.maxStreak;
+        this.statsMaxLosingStreakElement.textContent = stats.maxLosingStreak;
+        this.statsBestTimeElement.textContent = stats.bestTime > 0 ? formatTime(stats.bestTime) : '--:--';
+        this.statsAvgTimeElement.textContent = stats.averageTime > 0 ? formatTime(stats.averageTime) : '--:--';
+    }
+
+    /**
+     * 清空所有统计记录
+     */
+    clearStats() {
+        if (confirm('确定要清空所有游戏统计记录吗？此操作不可撤销。')) {
+            clearGameRecords();
+            this.updateStatsDisplay();
+            alert('统计记录已清空。');
         }
     }
 }

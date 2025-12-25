@@ -1,6 +1,7 @@
 /* 游戏核心逻辑模块 */
 
 import { randomUniqueIndices, padZero, NEIGHBOR_OFFSETS } from './utils.js';
+import { addGameRecord } from './stats.js';
 
 // 难度配置
 const DIFFICULTIES = {
@@ -323,6 +324,9 @@ export class Game {
                 }
             }
         }
+        
+        // 记录游戏结果
+        addGameRecord(this.difficulty, win, this.elapsedSeconds);
         
         this.onGameOver?.(win, this.elapsedSeconds);
     }
