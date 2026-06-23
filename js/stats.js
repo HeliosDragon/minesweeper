@@ -1,7 +1,7 @@
-/* 游戏数据统计模块 */
+/* 游戏数据统计模块 - 修复连胜计算 */
 
 const STORAGE_KEY = 'minesweeper_stats';
-const MAX_RECORDS = 1000; // 最多保存的记录数
+const MAX_RECORDS = 1000;
 
 /**
  * 游戏记录结构
@@ -30,9 +30,6 @@ function getGameRecords() {
 
 /**
  * 添加一条游戏记录
- * @param {string} difficulty - 难度
- * @param {boolean} win - 是否胜利
- * @param {number} time - 游戏用时（秒）
  */
 function addGameRecord(difficulty, win, time) {
     const records = getGameRecords();
@@ -43,12 +40,9 @@ function addGameRecord(difficulty, win, time) {
         time
     };
     records.push(record);
-    
-    // 保留最近 MAX_RECORDS 条记录
     if (records.length > MAX_RECORDS) {
         records.splice(0, records.length - MAX_RECORDS);
     }
-    
     try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
     } catch (error) {
@@ -78,9 +72,7 @@ function clearGameRecords() {
  */
 
 /**
- * 计算指定难度的统计信息
- * @param {string} difficulty - 难度 ('beginner', 'intermediate', 'expert')，或 'all' 表示全部难度
- * @returns {DifficultyStats}
+ * 计算指定难度的统计信息 - 【修复】连胜/连败追溯算法
  */
 function getStats(difficulty = 'all') {
     const records = getGameRecords();
@@ -94,7 +86,7 @@ function getStats(difficulty = 'all') {
     const losses = total - wins;
     const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
     
-    // 计算连胜/连败
+    // ---- 计算连胜/连败 ----
     let currentStreak = 0;
     let maxStreak = 0;
     let maxLosingStreak = 0;
@@ -103,6 +95,8 @@ function getStats(difficulty = 'all') {
     
     // 按时间戳排序（从旧到新）
     const sorted = [...filtered].sort((a, b) => a.timestamp - b.timestamp);
+    
+    // 遍历所有记录，计算最大连胜/连败
     for (const record of sorted) {
         if (record.win) {
             tempStreak++;
@@ -115,15 +109,17 @@ function getStats(difficulty = 'all') {
         }
     }
     
-    // 当前连胜/连败：从最新记录开始往前追溯
+    // 【修复】当前连胜/连败：从最新记录开始往前追溯
     if (sorted.length > 0) {
         let streak = 0;
-        const firstWin = sorted[sorted.length - 1].win;
-        // 逆序遍历
+        let isWin = null;
+        // 逆序遍历，从最新记录开始
         for (let i = sorted.length - 1; i >= 0; i--) {
             const win = sorted[i].win;
-            if (win === firstWin) {
-                // 与最新记录结果类型相同
+            if (isWin === null) {
+                isWin = win;
+                streak = win ? 1 : -1;
+            } else if (win === isWin) {
                 streak += win ? 1 : -1;
             } else {
                 break;
@@ -131,6 +127,7 @@ function getStats(difficulty = 'all') {
         }
         currentStreak = streak;
     }
+    // ---- 结束 ---- 
     
     // 最佳用时和平均用时（仅胜利局）
     const winRecords = filtered.filter(r => r.win);
@@ -157,7 +154,6 @@ function getStats(difficulty = 'all') {
 
 /**
  * 获取所有难度的统计摘要
- * @returns {Object.<string, DifficultyStats>}
  */
 function getAllDifficultyStats() {
     const difficulties = ['beginner', 'intermediate', 'expert', 'all'];
@@ -170,8 +166,6 @@ function getAllDifficultyStats() {
 
 /**
  * 格式化时间（秒）为 MM:SS
- * @param {number} seconds 
- * @returns {string}
  */
 function formatTime(seconds) {
     const mins = Math.floor(seconds / 60);
@@ -181,18 +175,11 @@ function formatTime(seconds) {
 
 /**
  * 格式化连胜显示
- * @param {number} streak 
- * @returns {string}
  */
 function formatStreak(streak) {
-    console.log('formatStreak called with streak:', streak);
-    if (streak > 0) {
-        return `${streak} 连胜`;
-    } else if (streak < 0) {
-        return `${-streak} 连败`;
-    } else {
-        return '无记录';
-    }
+    if (streak > 0) return `${streak} 连胜`;
+    if (streak < 0) return `${-streak} 连败`;
+    return '无记录';
 }
 
 // 全局暴露

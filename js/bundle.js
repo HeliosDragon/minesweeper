@@ -1,16 +1,18 @@
-/* 工具函数模块 */
+/* ============================
+   utils.js - 工具函数模块
+   ============================ */
 
 /**
  * 生成 min 到 max 之间的随机整数（包含两端）
  */
-export function randomInt(min, max) {
+function randomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 /**
  * 从数组中随机选择一个元素
  */
-export function randomChoice(array) {
+function randomChoice(array) {
     return array[randomInt(0, array.length - 1)];
 }
 
@@ -20,7 +22,7 @@ export function randomChoice(array) {
  * @param {number} max 最大索引（0~max-1）
  * @returns {number[]} 不重复的索引数组
  */
-export function randomUniqueIndices(count, max) {
+function randomUniqueIndices(count, max) {
     if (count > max) {
         throw new Error(`count (${count}) cannot be greater than max (${max})`);
     }
@@ -34,7 +36,7 @@ export function randomUniqueIndices(count, max) {
 /**
  * 深度复制二维数组
  */
-export function deepCopy2D(grid) {
+function deepCopy2D(grid) {
     return grid.map(row => [...row]);
 }
 
@@ -43,14 +45,14 @@ export function deepCopy2D(grid) {
  * @param {number} num 数字
  * @param {number} digits 位数
  */
-export function padZero(num, digits = 3) {
+function padZero(num, digits = 3) {
     return String(num).padStart(digits, '0');
 }
 
 /**
  * 防抖函数
  */
-export function debounce(func, delay) {
+function debounce(func, delay) {
     let timeoutId;
     return (...args) => {
         clearTimeout(timeoutId);
@@ -61,7 +63,7 @@ export function debounce(func, delay) {
 /**
  * 节流函数
  */
-export function throttle(func, limit) {
+function throttle(func, limit) {
     let inThrottle;
     return (...args) => {
         if (!inThrottle) {
@@ -75,14 +77,14 @@ export function throttle(func, limit) {
 /**
  * 检测移动设备
  */
-export function isMobile() {
+function isMobile() {
     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 }
 
 /**
  * 添加事件监听器，支持 passive 选项
  */
-export function addEventListener(el, event, handler, options = {}) {
+function addEventListener(el, event, handler, options = {}) {
     const passive = options.passive ?? true;
     el.addEventListener(event, handler, { passive, ...options });
     return () => el.removeEventListener(event, handler, { passive, ...options });
@@ -91,7 +93,7 @@ export function addEventListener(el, event, handler, options = {}) {
 /**
  * 创建 DOM 元素
  */
-export function createElement(tag, className, attributes = {}) {
+function createElement(tag, className, attributes = {}) {
     const el = document.createElement(tag);
     if (className) {
         if (Array.isArray(className)) {
@@ -109,14 +111,34 @@ export function createElement(tag, className, attributes = {}) {
 /**
  * 获取相邻格子的偏移量（8方向）
  */
-export const NEIGHBOR_OFFSETS = [
+const NEIGHBOR_OFFSETS = [
     [-1, -1], [-1, 0], [-1, 1],
     [0, -1],           [0, 1],
     [1, -1],  [1, 0],  [1, 1]
-];/* 游戏数据统计模块 */
+];
+
+// 全局暴露工具
+window.MinesweeperUtils = {
+    randomInt,
+    randomChoice,
+    randomUniqueIndices,
+    deepCopy2D,
+    padZero,
+    debounce,
+    throttle,
+    isMobile,
+    addEventListener,
+    createElement,
+    NEIGHBOR_OFFSETS
+};
+
+
+/* ============================
+   stats.js - 游戏数据统计模块（修复连胜计算）
+   ============================ */
 
 const STORAGE_KEY = 'minesweeper_stats';
-const MAX_RECORDS = 1000; // 最多保存的记录数
+const MAX_RECORDS = 1000;
 
 /**
  * 游戏记录结构
@@ -131,7 +153,7 @@ const MAX_RECORDS = 1000; // 最多保存的记录数
  * 获取所有游戏记录
  * @returns {GameRecord[]}
  */
-export function getGameRecords() {
+function getGameRecords() {
     try {
         const data = localStorage.getItem(STORAGE_KEY);
         if (!data) return [];
@@ -149,7 +171,7 @@ export function getGameRecords() {
  * @param {boolean} win - 是否胜利
  * @param {number} time - 游戏用时（秒）
  */
-export function addGameRecord(difficulty, win, time) {
+function addGameRecord(difficulty, win, time) {
     const records = getGameRecords();
     const record = {
         timestamp: Date.now(),
@@ -158,12 +180,9 @@ export function addGameRecord(difficulty, win, time) {
         time
     };
     records.push(record);
-    
-    // 保留最近 MAX_RECORDS 条记录
     if (records.length > MAX_RECORDS) {
         records.splice(0, records.length - MAX_RECORDS);
     }
-    
     try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
     } catch (error) {
@@ -174,7 +193,7 @@ export function addGameRecord(difficulty, win, time) {
 /**
  * 清空所有游戏记录
  */
-export function clearGameRecords() {
+function clearGameRecords() {
     localStorage.removeItem(STORAGE_KEY);
 }
 
@@ -193,11 +212,11 @@ export function clearGameRecords() {
  */
 
 /**
- * 计算指定难度的统计信息
+ * 计算指定难度的统计信息 - 【修复】连胜/连败追溯算法
  * @param {string} difficulty - 难度 ('beginner', 'intermediate', 'expert')，或 'all' 表示全部难度
  * @returns {DifficultyStats}
  */
-export function getStats(difficulty = 'all') {
+function getStats(difficulty = 'all') {
     const records = getGameRecords();
     let filtered = records;
     if (difficulty !== 'all') {
@@ -209,14 +228,12 @@ export function getStats(difficulty = 'all') {
     const losses = total - wins;
     const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
     
-    // 计算连胜/连败
-    let currentStreak = 0;
+    // 计算最大连胜/连败
     let maxStreak = 0;
     let maxLosingStreak = 0;
     let tempStreak = 0;
     let tempLosingStreak = 0;
     
-    // 按时间戳排序（从旧到新）
     const sorted = [...filtered].sort((a, b) => a.timestamp - b.timestamp);
     for (const record of sorted) {
         if (record.win) {
@@ -230,17 +247,17 @@ export function getStats(difficulty = 'all') {
         }
     }
     
-    // 当前连胜/连败：从最新记录开始往前追溯
+    // 【修复】当前连胜/连败：从最新记录开始往前追溯
+    let currentStreak = 0;
     if (sorted.length > 0) {
         let streak = 0;
         let isWin = null;
-        // 逆序遍历
         for (let i = sorted.length - 1; i >= 0; i--) {
             const win = sorted[i].win;
             if (isWin === null) {
                 isWin = win;
                 streak = win ? 1 : -1;
-            } else if ((win && isWin > 0) || (!win && isWin < 0)) {
+            } else if (win === isWin) {
                 streak += win ? 1 : -1;
             } else {
                 break;
@@ -276,7 +293,7 @@ export function getStats(difficulty = 'all') {
  * 获取所有难度的统计摘要
  * @returns {Object.<string, DifficultyStats>}
  */
-export function getAllDifficultyStats() {
+function getAllDifficultyStats() {
     const difficulties = ['beginner', 'intermediate', 'expert', 'all'];
     const result = {};
     for (const diff of difficulties) {
@@ -290,7 +307,7 @@ export function getAllDifficultyStats() {
  * @param {number} seconds 
  * @returns {string}
  */
-export function formatTime(seconds) {
+function formatTime(seconds) {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
@@ -301,14 +318,14 @@ export function formatTime(seconds) {
  * @param {number} streak 
  * @returns {string}
  */
-export function formatStreak(streak) {
+function formatStreak(streak) {
     if (streak > 0) return `${streak} 连胜`;
     if (streak < 0) return `${-streak} 连败`;
     return '无记录';
 }
 
-// 导出默认对象（可选）
-export default {
+// 全局暴露
+window.MinesweeperStats = {
     getGameRecords,
     addGameRecord,
     clearGameRecords,
@@ -316,10 +333,12 @@ export default {
     getAllDifficultyStats,
     formatTime,
     formatStreak
-};/* 游戏核心逻辑模块 */
+};
 
-import { randomUniqueIndices, padZero, NEIGHBOR_OFFSETS } from './utils.js';
-import { addGameRecord } from './stats.js';
+
+/* ============================
+   game.js - 游戏核心逻辑（含无猜模式）
+   ============================ */
 
 // 难度配置
 const DIFFICULTIES = {
@@ -330,18 +349,18 @@ const DIFFICULTIES = {
 
 // 游戏状态枚举
 const GameState = {
-    READY: 'ready',       // 准备开始
-    PLAYING: 'playing',   // 进行中
-    WIN: 'win',           // 胜利
-    LOSE: 'lose'          // 失败
+    READY: 'ready',
+    PLAYING: 'playing',
+    WIN: 'win',
+    LOSE: 'lose'
 };
 
 // 格子状态枚举
 const CellState = {
-    HIDDEN: 'hidden',     // 未翻开
-    REVEALED: 'revealed', // 已翻开
-    FLAGGED: 'flagged',   // 标记地雷
-    QUESTION: 'question'  // 标记问号（未实现）
+    HIDDEN: 'hidden',
+    REVEALED: 'revealed',
+    FLAGGED: 'flagged',
+    QUESTION: 'question'
 };
 
 // 格子类型
@@ -351,10 +370,219 @@ const CellType = {
     MINE: 'mine'
 };
 
-/**
- * 游戏核心类
- */
-export class Game {
+// ============================================================
+// 【新增】无猜模式推理引擎 (Solver)
+// ============================================================
+class MinesweeperSolver {
+    /**
+     * 检查给定地图从起始位置是否可完全推理（无猜）
+     * @param {Array} grid - 二维格子数组
+     * @param {number} rows - 行数
+     * @param {number} cols - 列数
+     * @param {number} startRow - 起始行
+     * @param {number} startCol - 起始列
+     * @returns {boolean} 是否可完全推理
+     */
+    static isSolvable(grid, rows, cols, startRow, startCol) {
+        // 深拷贝当前状态
+        const state = grid.map(row => row.map(cell => ({
+            type: cell.type,
+            state: cell.state,
+            neighborMines: cell.neighborMines,
+            row: cell.row,
+            col: cell.col
+        })));
+        
+        // 翻开起始位置
+        if (state[startRow][startCol].type === CellType.MINE) return false;
+        state[startRow][startCol].state = CellState.REVEALED;
+        
+        let revealedCount = 1;
+        let changed = true;
+        const totalSafe = rows * cols - this.countMines(state, rows, cols);
+        
+        let iterations = 0;
+        const maxIterations = rows * cols * 2;
+        
+        while (changed && revealedCount < totalSafe && iterations < maxIterations) {
+            changed = false;
+            iterations++;
+            
+            const result = this.applyInference(state, rows, cols);
+            if (result.revealed > 0) {
+                revealedCount += result.revealed;
+                changed = true;
+            }
+            if (result.flagged > 0) {
+                changed = true;
+            }
+            
+            if (!changed) {
+                const advancedResult = this.applyAdvancedInference(state, rows, cols);
+                if (advancedResult.revealed > 0) {
+                    revealedCount += advancedResult.revealed;
+                    changed = true;
+                }
+                if (advancedResult.flagged > 0) {
+                    changed = true;
+                }
+            }
+        }
+        
+        return revealedCount === totalSafe;
+    }
+    
+    static countMines(grid, rows, cols) {
+        let count = 0;
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                if (grid[r][c].type === CellType.MINE) count++;
+            }
+        }
+        return count;
+    }
+    
+    static applyInference(grid, rows, cols) {
+        let revealed = 0;
+        let flagged = 0;
+        
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                const cell = grid[r][c];
+                if (cell.state !== CellState.REVEALED || cell.type !== CellType.NUMBER) continue;
+                
+                const neighbors = this.getNeighbors(grid, rows, cols, r, c);
+                const hidden = neighbors.filter(n => n.state === CellState.HIDDEN);
+                const flaggedNeighbors = neighbors.filter(n => n.state === CellState.FLAGGED);
+                
+                const remainingMines = cell.neighborMines - flaggedNeighbors.length;
+                
+                if (hidden.length === remainingMines && remainingMines > 0) {
+                    for (const n of hidden) {
+                        if (n.state === CellState.HIDDEN && n.type === CellType.MINE) {
+                            n.state = CellState.FLAGGED;
+                            flagged++;
+                        }
+                    }
+                }
+                
+                if (remainingMines === 0) {
+                    for (const n of hidden) {
+                        if (n.state === CellState.HIDDEN && n.type !== CellType.MINE) {
+                            n.state = CellState.REVEALED;
+                            revealed++;
+                        }
+                    }
+                }
+            }
+        }
+        
+        return { revealed, flagged };
+    }
+    
+    static applyAdvancedInference(grid, rows, cols) {
+        let revealed = 0;
+        let flagged = 0;
+        
+        const constraints = [];
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                const cell = grid[r][c];
+                if (cell.state !== CellState.REVEALED || cell.type !== CellType.NUMBER) continue;
+                
+                const neighbors = this.getNeighbors(grid, rows, cols, r, c);
+                const hidden = neighbors.filter(n => n.state === CellState.HIDDEN);
+                const flaggedNeighbors = neighbors.filter(n => n.state === CellState.FLAGGED);
+                
+                const remainingMines = cell.neighborMines - flaggedNeighbors.length;
+                if (hidden.length > 0 && remainingMines >= 0) {
+                    constraints.push({
+                        cells: hidden,
+                        mines: remainingMines,
+                        row: r,
+                        col: c
+                    });
+                }
+            }
+        }
+        
+        for (let i = 0; i < constraints.length; i++) {
+            for (let j = i + 1; j < constraints.length; j++) {
+                const a = constraints[i];
+                const b = constraints[j];
+                
+                const aSet = new Set(a.cells.map(c => `${c.row},${c.col}`));
+                const bSet = new Set(b.cells.map(c => `${c.row},${c.col}`));
+                
+                const intersection = a.cells.filter(c => bSet.has(`${c.row},${c.col}`));
+                const aOnly = a.cells.filter(c => !bSet.has(`${c.row},${c.col}`));
+                const bOnly = b.cells.filter(c => !aSet.has(`${c.row},${c.col}`));
+                
+                if (aOnly.length > 0 && intersection.length === b.cells.length) {
+                    const aOnlyMines = a.mines - b.mines;
+                    if (aOnlyMines === 0) {
+                        for (const n of aOnly) {
+                            if (n.state === CellState.HIDDEN && n.type !== CellType.MINE) {
+                                n.state = CellState.REVEALED;
+                                revealed++;
+                            }
+                        }
+                    } else if (aOnlyMines === aOnly.length) {
+                        for (const n of aOnly) {
+                            if (n.state === CellState.HIDDEN && n.type === CellType.MINE) {
+                                n.state = CellState.FLAGGED;
+                                flagged++;
+                            }
+                        }
+                    }
+                }
+                
+                if (bOnly.length > 0 && intersection.length === a.cells.length) {
+                    const bOnlyMines = b.mines - a.mines;
+                    if (bOnlyMines === 0) {
+                        for (const n of bOnly) {
+                            if (n.state === CellState.HIDDEN && n.type !== CellType.MINE) {
+                                n.state = CellState.REVEALED;
+                                revealed++;
+                            }
+                        }
+                    } else if (bOnlyMines === bOnly.length) {
+                        for (const n of bOnly) {
+                            if (n.state === CellState.HIDDEN && n.type === CellType.MINE) {
+                                n.state = CellState.FLAGGED;
+                                flagged++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        return { revealed, flagged };
+    }
+    
+    static getNeighbors(grid, rows, cols, row, col) {
+        const result = [];
+        const offsets = [
+            [-1, -1], [-1, 0], [-1, 1],
+            [0, -1],           [0, 1],
+            [1, -1],  [1, 0],  [1, 1]
+        ];
+        for (const [dr, dc] of offsets) {
+            const nr = row + dr;
+            const nc = col + dc;
+            if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
+                result.push(grid[nr][nc]);
+            }
+        }
+        return result;
+    }
+}
+
+// ============================================================
+// 【修改】游戏核心类
+// ============================================================
+class Game {
     constructor(difficulty = 'intermediate') {
         this.difficulty = difficulty;
         this.config = DIFFICULTIES[difficulty];
@@ -363,33 +591,30 @@ export class Game {
         this.totalMines = this.config.mines;
         
         this.state = GameState.READY;
-        this.grid = null;          // 二维数组，每个元素为格子对象
-        this.revealedCount = 0;    // 已翻开的格子数
-        this.flaggedCount = 0;     // 标记的格子数
+        this.grid = null;
+        this.revealedCount = 0;
+        this.flaggedCount = 0;
         this.minesRemaining = this.totalMines;
-        this.hintsUsed = 0;        // 已使用提示次数
-        this.maxHints = 3;         // 最大提示次数
+        this.hintsUsed = 0;
+        this.maxHints = 3;
         
-        this.startTime = null;     // 游戏开始时间戳
-        this.timerInterval = null; // 计时器引用
-        this.elapsedSeconds = 0;   // 经过秒数
+        this.startTime = null;
+        this.timerInterval = null;
+        this.elapsedSeconds = 0;
         
-        this.isFirstClick = true;  // 是否为第一次点击（用于确保第一次点击不是地雷）
+        this.isFirstClick = true;
+        this.noGuessMode = true;
+        this._generationAttempts = 0;
         
-        // 绑定方法
         this.handleCellClick = this.handleCellClick.bind(this);
         this.handleCellRightClick = this.handleCellRightClick.bind(this);
         this.handleReset = this.handleReset.bind(this);
         this.handleDifficultyChange = this.handleDifficultyChange.bind(this);
         this.handleHint = this.handleHint.bind(this);
         
-        // 初始化网格
         this.initGrid();
     }
     
-    /**
-     * 初始化空白网格
-     */
     initGrid() {
         this.grid = [];
         for (let r = 0; r < this.rows; r++) {
@@ -398,7 +623,7 @@ export class Game {
                 row.push({
                     type: CellType.EMPTY,
                     state: CellState.HIDDEN,
-                    neighborMines: 0,  // 周围地雷数
+                    neighborMines: 0,
                     row: r,
                     col: c
                 });
@@ -411,16 +636,117 @@ export class Game {
         this.hintsUsed = 0;
         this.elapsedSeconds = 0;
         this.isFirstClick = true;
+        this._generationAttempts = 0;
         this.stopTimer();
     }
     
-    /**
-     * 布置地雷（排除第一个点击的格子及其周围）
-     * @param {number} safeRow 安全行
-     * @param {number} safeCol 安全列
-     */
     placeMines(safeRow, safeCol) {
-        // 计算安全区域（包括点击格子及其周围8格）
+        if (this.noGuessMode) {
+            const success = this.generateNoGuessMap(safeRow, safeCol);
+            if (!success) {
+                console.warn('无猜模式生成失败，回退到普通生成');
+                this.placeMinesRandom(safeRow, safeCol);
+            }
+        } else {
+            this.placeMinesRandom(safeRow, safeCol);
+        }
+        this.calculateNeighborMines();
+    }
+    
+    generateNoGuessMap(safeRow, safeCol) {
+        const maxAttempts = 200;
+        let attempts = 0;
+        
+        while (attempts < maxAttempts) {
+            attempts++;
+            this._generationAttempts = attempts;
+            
+            const gridCopy = [];
+            for (let r = 0; r < this.rows; r++) {
+                const row = [];
+                for (let c = 0; c < this.cols; c++) {
+                    row.push({
+                        type: CellType.EMPTY,
+                        state: CellState.HIDDEN,
+                        neighborMines: 0,
+                        row: r,
+                        col: c
+                    });
+                }
+                gridCopy.push(row);
+            }
+            
+            const safeCells = new Set();
+            for (const [dr, dc] of NEIGHBOR_OFFSETS) {
+                const nr = safeRow + dr;
+                const nc = safeCol + dc;
+                if (nr >= 0 && nr < this.rows && nc >= 0 && nc < this.cols) {
+                    safeCells.add(nr * this.cols + nc);
+                }
+            }
+            safeCells.add(safeRow * this.cols + safeCol);
+            
+            const totalCells = this.rows * this.cols;
+            const availableIndices = [];
+            for (let i = 0; i < totalCells; i++) {
+                if (!safeCells.has(i)) {
+                    availableIndices.push(i);
+                }
+            }
+            
+            if (availableIndices.length < this.totalMines) continue;
+            
+            const shuffled = [...availableIndices];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            const mineIndices = shuffled.slice(0, this.totalMines);
+            
+            for (const idx of mineIndices) {
+                const r = Math.floor(idx / this.cols);
+                const c = idx % this.cols;
+                gridCopy[r][c].type = CellType.MINE;
+            }
+            
+            for (let r = 0; r < this.rows; r++) {
+                for (let c = 0; c < this.cols; c++) {
+                    if (gridCopy[r][c].type === CellType.MINE) continue;
+                    let count = 0;
+                    for (const [dr, dc] of NEIGHBOR_OFFSETS) {
+                        const nr = r + dr;
+                        const nc = c + dc;
+                        if (nr >= 0 && nr < this.rows && nc >= 0 && nc < this.cols) {
+                            if (gridCopy[nr][nc].type === CellType.MINE) count++;
+                        }
+                    }
+                    gridCopy[r][c].neighborMines = count;
+                    if (count > 0) {
+                        gridCopy[r][c].type = CellType.NUMBER;
+                    }
+                }
+            }
+            
+            const solvable = MinesweeperSolver.isSolvable(
+                gridCopy, this.rows, this.cols, safeRow, safeCol
+            );
+            
+            if (solvable) {
+                this.grid = gridCopy;
+                console.log(`✅ 无猜地图生成成功，尝试次数: ${attempts}`);
+                return true;
+            }
+            
+            if (attempts % 50 === 0) {
+                console.log(`⏳ 无猜模式生成中... 已尝试 ${attempts} 次`);
+            }
+        }
+        
+        console.warn(`❌ 无猜模式生成失败，已尝试 ${maxAttempts} 次`);
+        return false;
+    }
+    
+    placeMinesRandom(safeRow, safeCol) {
         const safeCells = new Set();
         for (const [dr, dc] of NEIGHBOR_OFFSETS) {
             const nr = safeRow + dr;
@@ -431,39 +757,34 @@ export class Game {
         }
         safeCells.add(safeRow * this.cols + safeCol);
         
-        // 生成地雷位置
         const totalCells = this.rows * this.cols;
-        const mineIndices = randomUniqueIndices(this.totalMines, totalCells).filter(
-            idx => !safeCells.has(idx)
-        );
+        let mineIndices = randomUniqueIndices(this.totalMines, totalCells)
+            .filter(idx => !safeCells.has(idx));
         
-        // 放置地雷
+        while (mineIndices.length < this.totalMines) {
+            const idx = randomInt(0, totalCells - 1);
+            if (!safeCells.has(idx) && !mineIndices.includes(idx)) {
+                mineIndices.push(idx);
+            }
+        }
+        
         for (const idx of mineIndices) {
             const r = Math.floor(idx / this.cols);
             const c = idx % this.cols;
             this.grid[r][c].type = CellType.MINE;
         }
-        
-        // 计算每个格子的周围地雷数
-        this.calculateNeighborMines();
     }
     
-    /**
-     * 计算每个格子的周围地雷数
-     */
     calculateNeighborMines() {
         for (let r = 0; r < this.rows; r++) {
             for (let c = 0; c < this.cols; c++) {
                 if (this.grid[r][c].type === CellType.MINE) continue;
-                
                 let count = 0;
                 for (const [dr, dc] of NEIGHBOR_OFFSETS) {
                     const nr = r + dr;
                     const nc = c + dc;
                     if (nr >= 0 && nr < this.rows && nc >= 0 && nc < this.cols) {
-                        if (this.grid[nr][nc].type === CellType.MINE) {
-                            count++;
-                        }
+                        if (this.grid[nr][nc].type === CellType.MINE) count++;
                     }
                 }
                 this.grid[r][c].neighborMines = count;
@@ -474,9 +795,6 @@ export class Game {
         }
     }
     
-    /**
-     * 开始游戏（第一次点击时调用）
-     */
     startGame() {
         this.state = GameState.PLAYING;
         this.startTime = Date.now();
@@ -484,9 +802,6 @@ export class Game {
         this.isFirstClick = false;
     }
     
-    /**
-     * 开始计时器
-     */
     startTimer() {
         this.stopTimer();
         this.timerInterval = setInterval(() => {
@@ -495,9 +810,6 @@ export class Game {
         }, 1000);
     }
     
-    /**
-     * 停止计时器
-     */
     stopTimer() {
         if (this.timerInterval) {
             clearInterval(this.timerInterval);
@@ -505,23 +817,15 @@ export class Game {
         }
     }
     
-    /**
-     * 翻开格子
-     * @param {number} row 行
-     * @param {number} col 列
-     * @returns {boolean} 是否允许翻开（游戏是否继续）
-     */
     revealCell(row, col) {
         const cell = this.grid[row][col];
         if (cell.state !== CellState.HIDDEN) return true;
         
-        // 第一次点击时布置地雷
         if (this.isFirstClick) {
             this.placeMines(row, col);
             this.startGame();
         }
         
-        // 如果是地雷，游戏结束
         if (cell.type === CellType.MINE) {
             cell.state = CellState.REVEALED;
             this.revealedCount++;
@@ -529,24 +833,17 @@ export class Game {
             return false;
         }
         
-        // 翻开当前格子
         cell.state = CellState.REVEALED;
         this.revealedCount++;
         
-        // 如果是空白格子，递归翻开周围
         if (cell.neighborMines === 0) {
             this.revealNeighbors(row, col);
         }
         
-        // 检查是否胜利
         this.checkWin();
-        
         return true;
     }
     
-    /**
-     * 递归翻开周围空白格子
-     */
     revealNeighbors(row, col) {
         const stack = [[row, col]];
         const visited = new Set();
@@ -573,9 +870,6 @@ export class Game {
         }
     }
     
-    /**
-     * 标记/取消标记格子
-     */
     toggleFlag(row, col) {
         const cell = this.grid[row][col];
         if (cell.state === CellState.REVEALED) return;
@@ -594,18 +888,13 @@ export class Game {
         this.checkWin();
     }
     
-    /**
-     * 检查是否胜利
-     */
     checkWin() {
-        // 条件1: 所有非地雷格子都已翻开
         const nonMineCells = this.rows * this.cols - this.totalMines;
         if (this.revealedCount === nonMineCells) {
             this.gameOver(true);
             return true;
         }
         
-        // 条件2: 所有地雷都被正确标记（可选）
         let correctFlags = 0;
         for (let r = 0; r < this.rows; r++) {
             for (let c = 0; c < this.cols; c++) {
@@ -619,19 +908,13 @@ export class Game {
             this.gameOver(true);
             return true;
         }
-        
         return false;
     }
     
-    /**
-     * 游戏结束
-     * @param {boolean} win 是否胜利
-     */
     gameOver(win) {
         this.state = win ? GameState.WIN : GameState.LOSE;
         this.stopTimer();
         
-        // 如果失败，显示所有地雷
         if (!win) {
             for (let r = 0; r < this.rows; r++) {
                 for (let c = 0; c < this.cols; c++) {
@@ -643,15 +926,10 @@ export class Game {
             }
         }
         
-        // 记录游戏结果
         addGameRecord(this.difficulty, win, this.elapsedSeconds);
-        
         this.onGameOver?.(win, this.elapsedSeconds);
     }
     
-    /**
-     * 重置游戏
-     */
     reset() {
         this.stopTimer();
         this.state = GameState.READY;
@@ -659,9 +937,6 @@ export class Game {
         this.onReset?.();
     }
     
-    /**
-     * 更改难度
-     */
     changeDifficulty(difficulty) {
         if (this.difficulty === difficulty) return;
         this.difficulty = difficulty;
@@ -672,15 +947,11 @@ export class Game {
         this.reset();
     }
     
-    /**
-     * 获取提示（返回一个安全格子的坐标，如果找不到则返回null）
-     */
     getHint() {
         if (this.hintsUsed >= this.maxHints || this.state !== GameState.PLAYING) {
             return null;
         }
         
-        // 策略：找一个未翻开且不是地雷的格子
         const candidates = [];
         for (let r = 0; r < this.rows; r++) {
             for (let c = 0; c < this.cols; c++) {
@@ -691,30 +962,21 @@ export class Game {
             }
         }
         
-        if (candidates.length === 0) {
-            return null;
-        }
-        
-        // 随机选择一个
+        if (candidates.length === 0) return null;
         const hint = candidates[Math.floor(Math.random() * candidates.length)];
         this.hintsUsed++;
         this.onHintUpdate?.(this.hintsUsed);
-        
         return hint;
     }
     
-    /**
-     * 事件回调占位
-     */
-    onTimerUpdate = null;          // (seconds) => void
-    onFlagUpdate = null;           // (minesRemaining) => void
-    onGameOver = null;             // (win, seconds) => void
-    onReset = null;                // () => void
-    onHintUpdate = null;           // (hintsUsed) => void
+    // 事件回调
+    onTimerUpdate = null;
+    onFlagUpdate = null;
+    onGameOver = null;
+    onReset = null;
+    onHintUpdate = null;
+    onHintApplied = null;
     
-    /**
-     * 处理格子点击（代理方法）
-     */
     handleCellClick(row, col) {
         if (this.state === GameState.WIN || this.state === GameState.LOSE) return;
         this.revealCell(row, col);
@@ -741,14 +1003,22 @@ export class Game {
     }
 }
 
-// 导出配置
-export { DIFFICULTIES, GameState, CellState, CellType };/* 用户界面模块 */
+// 全局暴露
+window.MinesweeperGame = {
+    Game,
+    DIFFICULTIES,
+    GameState,
+    CellState,
+    CellType,
+    MinesweeperSolver
+};
 
-import { Game, DIFFICULTIES, GameState, CellState, CellType } from './game.js';
-import { padZero, createElement, addEventListener } from './utils.js';
-import { getStats, formatTime, formatStreak, clearGameRecords } from './stats.js';
 
-export class UI {
+/* ============================
+   ui.js - 用户界面（修复提示+连胜展示）
+   ============================ */
+
+class UI {
     constructor() {
         console.log('UI 构造函数开始');
         this.game = null;
@@ -760,19 +1030,15 @@ export class UI {
         this.difficultySelect = document.getElementById('difficulty-select');
         this.hintButton = document.getElementById('hint-btn');
         this.hintCountElement = document.getElementById('hint-count');
+        this.streakCounterElement = document.getElementById('streak-counter');
         
-        console.log('获取的元素:', {
-            grid: this.gridElement,
-            minesCount: this.minesCountElement,
-            timer: this.timerElement,
-            gameStatus: this.gameStatusElement,
-            resetButton: this.resetButton,
-            difficultySelect: this.difficultySelect,
-            hintButton: this.hintButton,
-            hintCount: this.hintCountElement
-        });
+        this.streakIconElement = document.createElement('i');
+        this.streakIconElement.classList.add('fas');
+        const parent = this.streakCounterElement?.parentNode;
+        if (parent) {
+            parent.appendChild(this.streakIconElement);
+        }
         
-        // 统计面板元素
         this.statsDifficultyElement = document.getElementById('stats-difficulty');
         this.statsTotalElement = document.getElementById('stats-total');
         this.statsWinRateElement = document.getElementById('stats-win-rate');
@@ -782,55 +1048,57 @@ export class UI {
         this.statsBestTimeElement = document.getElementById('stats-best-time');
         this.statsAvgTimeElement = document.getElementById('stats-avg-time');
         this.statsResetButton = document.getElementById('stats-reset-btn');
+        this.statsStreakSummaryElement = document.getElementById('stats-streak-summary');
+        this.statsBestTimeSummaryElement = document.getElementById('stats-best-time-summary');
+        this.statsToggleBtn = document.getElementById('stats-toggle-btn');
+        this.statsDetailsElement = document.getElementById('stats-details');
+        
+        this._hintTimeout = null;
+        this._hintedCell = null;
         
         this.init();
     }
     
     init() {
         console.log('UI 初始化开始');
-        // 创建游戏实例
         const difficulty = this.difficultySelect.value;
         console.log('难度:', difficulty);
         this.game = new Game(difficulty);
         console.log('游戏实例创建完成');
         
-        // 绑定游戏事件
         this.game.onTimerUpdate = (seconds) => this.updateTimer(seconds);
         this.game.onFlagUpdate = (minesRemaining) => this.updateMinesCount(minesRemaining);
         this.game.onGameOver = (win, seconds) => this.showGameOver(win, seconds);
         this.game.onReset = () => this.resetUI();
         this.game.onHintUpdate = (hintsUsed) => this.updateHintCount(hintsUsed);
+        this.game.onHintApplied = (row, col) => {
+            this.highlightHint(row, col);
+        };
         
-        // 绑定UI事件
         this.resetButton.addEventListener('click', () => this.game.handleReset());
         this.difficultySelect.addEventListener('change', (e) => {
             this.game.handleDifficultyChange(e.target.value);
             this.renderGrid();
-            this.updateStatsDisplay(); // 难度切换时更新统计
+            this.updateStatsDisplay();
         });
         this.hintButton.addEventListener('click', () => this.game.handleHint());
         this.statsResetButton.addEventListener('click', () => this.clearStats());
+        this.statsToggleBtn.addEventListener('click', () => this.toggleStatsDetails());
         
-        // 初始化UI
         this.updateMinesCount(this.game.minesRemaining);
         this.updateTimer(0);
         this.updateHintCount(0);
         console.log('开始渲染网格');
         this.renderGrid();
         this.updateGameStatus('点击格子开始游戏');
-        this.updateStatsDisplay(); // 初始显示统计
+        this.updateStatsDisplay();
         console.log('UI 初始化完成');
     }
     
-    /**
-     * 渲染整个网格
-     */
     renderGrid() {
         console.log(`渲染网格: ${this.game.rows}行 ${this.game.cols}列`);
         this.gridElement.innerHTML = '';
         this.gridElement.style.gridTemplateColumns = `repeat(${this.game.cols}, 1fr)`;
-        
-        // 添加难度CSS类
         this.gridElement.parentElement.className = `grid-wrapper difficulty-${this.game.difficulty}`;
         
         for (let r = 0; r < this.game.rows; r++) {
@@ -843,15 +1111,11 @@ export class UI {
         console.log(`网格渲染完成，共 ${this.game.rows * this.game.cols} 个格子`);
     }
     
-    /**
-     * 创建单个格子DOM元素
-     */
     createCellElement(cell) {
         const cellElement = createElement('div', 'cell');
         cellElement.dataset.row = cell.row;
         cellElement.dataset.col = cell.col;
         
-        // 根据格子状态添加CSS类
         if (cell.state === CellState.REVEALED) {
             cellElement.classList.add('revealed');
             if (cell.type === CellType.MINE) {
@@ -864,7 +1128,6 @@ export class UI {
             cellElement.classList.add('flagged');
         }
         
-        // 事件监听
         cellElement.addEventListener('click', (e) => {
             e.preventDefault();
             this.handleCellClick(cell.row, cell.col, false);
@@ -875,7 +1138,6 @@ export class UI {
             this.handleCellClick(cell.row, cell.col, true);
         }, { passive: false });
         
-        // 触摸事件支持
         cellElement.addEventListener('touchstart', (e) => {
             e.preventDefault();
             this.handleTouchStart(cell.row, cell.col, e);
@@ -884,30 +1146,25 @@ export class UI {
         return cellElement;
     }
     
-    /**
-     * 处理格子点击
-     */
     handleCellClick(row, col, isRightClick) {
-        console.log(`点击格子 (${row}, ${col})，右键: ${isRightClick}`);
         if (isRightClick) {
             this.game.handleCellRightClick(row, col);
         } else {
             this.game.handleCellClick(row, col);
         }
-        this.updateCellUI(row, col);
+        this.renderGrid();
         this.updateGameStatus();
+        if (this.game.state === GameState.WIN || this.game.state === GameState.LOSE) {
+            this.updateStatsDisplay();
+        }
     }
     
-    /**
-     * 处理触摸开始（长按模拟右键）
-     */
     handleTouchStart(row, col, event) {
         const touch = event.touches[0];
         const startTime = Date.now();
         const touchTimeout = setTimeout(() => {
-            // 长按超过500ms视为右键
             this.game.handleCellRightClick(row, col);
-            this.updateCellUI(row, col);
+            this.renderGrid();
             this.updateGameStatus();
             event.preventDefault();
         }, 500);
@@ -915,9 +1172,8 @@ export class UI {
         const touchEndHandler = () => {
             clearTimeout(touchTimeout);
             if (Date.now() - startTime < 500) {
-                // 短按为左键
                 this.game.handleCellClick(row, col);
-                this.updateCellUI(row, col);
+                this.renderGrid();
                 this.updateGameStatus();
             }
             document.removeEventListener('touchend', touchEndHandler);
@@ -925,7 +1181,6 @@ export class UI {
         };
         
         const touchMoveHandler = (e) => {
-            // 如果移动则取消长按
             const currentTouch = e.touches[0];
             const dx = currentTouch.clientX - touch.clientX;
             const dy = currentTouch.clientY - touch.clientY;
@@ -940,35 +1195,33 @@ export class UI {
         document.addEventListener('touchmove', touchMoveHandler);
     }
     
-    /**
-     * 更新单个格子的UI
-     */
-    updateCellUI(row, col) {
-        const cell = this.game.grid[row][col];
-        const cellElement = this.gridElement.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+    highlightHint(row, col) {
+        if (this._hintedCell) {
+            this._hintedCell.classList.remove('hinted');
+        }
+        
+        const cellElement = this.gridElement.querySelector(
+            `[data-row="${row}"][data-col="${col}"]`
+        );
         if (!cellElement) return;
         
-        // 重置类
-        cellElement.className = 'cell';
-        cellElement.textContent = '';
+        cellElement.classList.add('hinted');
+        this._hintedCell = cellElement;
         
-        // 更新类
-        if (cell.state === CellState.REVEALED) {
-            cellElement.classList.add('revealed');
-            if (cell.type === CellType.MINE) {
-                cellElement.classList.add('mine');
-            } else if (cell.type === CellType.NUMBER) {
-                cellElement.classList.add(`number-${cell.neighborMines}`);
-                cellElement.textContent = cell.neighborMines || '';
-            }
-        } else if (cell.state === CellState.FLAGGED) {
-            cellElement.classList.add('flagged');
+        if (this._hintTimeout) {
+            clearTimeout(this._hintTimeout);
         }
+        this._hintTimeout = setTimeout(() => {
+            if (this._hintedCell) {
+                this._hintedCell.classList.remove('hinted');
+                this._hintedCell = null;
+            }
+            this._hintTimeout = null;
+        }, 3000);
+        
+        this.updateGameStatus(`💡 提示: 点击 (${row + 1}, ${col + 1}) 位置安全`);
     }
     
-    /**
-     * 更新游戏状态显示
-     */
     updateGameStatus(customMessage) {
         if (customMessage) {
             this.gameStatusElement.textContent = customMessage;
@@ -986,28 +1239,22 @@ export class UI {
                 message = '游戏中…';
                 break;
             case GameState.WIN:
-                message = `胜利！用时 ${this.game.elapsedSeconds} 秒`;
+                message = `🎉 胜利！用时 ${this.game.elapsedSeconds} 秒`;
                 statusClass = 'win';
                 break;
             case GameState.LOSE:
-                message = '游戏结束！踩到地雷了';
+                message = '💥 游戏结束！踩到地雷了';
                 statusClass = 'lose';
                 break;
         }
         this.gameStatusElement.textContent = message;
         this.gameStatusElement.className = `game-status ${statusClass}`;
-        
-        // 更新重置按钮表情
         this.updateResetButtonFace();
     }
     
-    /**
-     * 更新重置按钮表情
-     */
     updateResetButtonFace() {
         const icon = this.resetButton.querySelector('i');
         if (!icon) return;
-        
         switch (this.game.state) {
             case GameState.WIN:
                 icon.className = 'fas fa-laugh-beam';
@@ -1021,58 +1268,30 @@ export class UI {
         }
     }
     
-    /**
-     * 更新地雷计数器
-     */
     updateMinesCount(count) {
         this.minesCountElement.textContent = padZero(Math.max(0, count), 3);
     }
     
-    /**
-     * 更新计时器
-     */
     updateTimer(seconds) {
         this.timerElement.textContent = padZero(seconds, 3);
     }
     
-    /**
-     * 更新提示次数
-     */
     updateHintCount(hintsUsed) {
         const remaining = this.game.maxHints - hintsUsed;
         this.hintCountElement.textContent = remaining;
         this.hintButton.disabled = remaining <= 0;
     }
     
-    /**
-     * 显示游戏结束
-     */
     showGameOver(win, seconds) {
-        // 更新所有格子（显示地雷）
-        for (let r = 0; r < this.game.rows; r++) {
-            for (let c = 0; c < this.game.cols; c++) {
-                this.updateCellUI(r, c);
-            }
-        }
-        
-        // 显示消息
+        this.renderGrid();
         this.updateGameStatus();
-        
-        // 禁用提示按钮
         this.hintButton.disabled = true;
-        
-        // 显示胜利/失败动画
         if (win) {
             this.showConfetti();
         }
-        
-        // 更新统计信息
         this.updateStatsDisplay();
     }
     
-    /**
-     * 重置UI
-     */
     resetUI() {
         this.updateMinesCount(this.game.minesRemaining);
         this.updateTimer(0);
@@ -1080,11 +1299,9 @@ export class UI {
         this.renderGrid();
         this.updateGameStatus('点击格子开始游戏');
         this.hintButton.disabled = false;
+        this.updateStatsDisplay();
     }
     
-    /**
-     * 显示庆祝彩花（简单实现）
-     */
     showConfetti() {
         const confettiCount = 100;
         const colors = ['#4a6fa5', '#28a745', '#dc3545', '#ffc107', '#17a2b8'];
@@ -1106,7 +1323,6 @@ export class UI {
             setTimeout(() => confetti.remove(), 5000);
         }
         
-        // 添加CSS动画
         if (!document.getElementById('confetti-style')) {
             const style = createElement('style', null, { id: 'confetti-style' });
             style.textContent = `
@@ -1119,14 +1335,10 @@ export class UI {
         }
     }
 
-    /**
-     * 更新统计信息显示
-     */
     updateStatsDisplay() {
         const difficulty = this.game.difficulty;
         const stats = getStats(difficulty);
         
-        // 难度显示名称映射
         const difficultyNames = {
             beginner: '初级',
             intermediate: '中级',
@@ -1140,16 +1352,48 @@ export class UI {
         this.statsMaxLosingStreakElement.textContent = stats.maxLosingStreak;
         this.statsBestTimeElement.textContent = stats.bestTime > 0 ? formatTime(stats.bestTime) : '--:--';
         this.statsAvgTimeElement.textContent = stats.averageTime > 0 ? formatTime(stats.averageTime) : '--:--';
+        
+        this.statsStreakSummaryElement.textContent = formatStreak(stats.currentStreak);
+        this.statsBestTimeSummaryElement.textContent = stats.bestTime > 0 ? formatTime(stats.bestTime) : '--:--';
+        
+        if (this.streakCounterElement) {
+            const absStreak = Math.abs(stats.currentStreak);
+            this.streakCounterElement.textContent = absStreak;
+            this.streakCounterElement.parentElement.classList.remove('positive', 'negative');
+            
+            if (stats.currentStreak > 0) {
+                this.streakCounterElement.parentElement.classList.add('positive');
+                this.streakIconElement.className = 'fas fa-trophy';
+                this.streakIconElement.style.opacity = '1';
+                this.streakCounterElement.parentElement.querySelector('.counter-label').textContent = '连胜';
+            } else if (stats.currentStreak < 0) {
+                this.streakCounterElement.parentElement.classList.add('negative');
+                this.streakIconElement.className = 'fas fa-thumbs-down';
+                this.streakIconElement.style.opacity = '1';
+                this.streakCounterElement.parentElement.querySelector('.counter-label').textContent = '连败';
+            } else {
+                this.streakIconElement.style.opacity = '0';
+                this.streakCounterElement.parentElement.querySelector('.counter-label').textContent = '连胜/连败';
+            }
+        }
     }
 
-    /**
-     * 清空所有统计记录
-     */
     clearStats() {
         if (confirm('确定要清空所有游戏统计记录吗？此操作不可撤销。')) {
             clearGameRecords();
             this.updateStatsDisplay();
             alert('统计记录已清空。');
+        }
+    }
+
+    toggleStatsDetails() {
+        const details = this.statsDetailsElement;
+        if (details.style.display === 'none') {
+            details.style.display = 'block';
+            this.statsToggleBtn.textContent = '隐藏统计';
+        } else {
+            details.style.display = 'none';
+            this.statsToggleBtn.textContent = '详细统计';
         }
     }
 }
