@@ -4,18 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>扫雷游戏 - Minesweeper</title>
+    <script>
+        // 首屏渲染前应用已保存的主题，避免深浅色闪烁
+        (function () {
+            var t = 'light';
+            try { t = localStorage.getItem('ms-theme') || 'light'; } catch (e) {}
+            document.documentElement.setAttribute('data-theme', t);
+        })();
+    </script>
     <link rel="stylesheet" href="css/reset.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/game.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/x-icon" href="assets/icons/favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%234a6fa5'/%3E%3Ctext x='50' y='72' font-size='60' text-anchor='middle' fill='white'%3E%F0%9F%92%A3%3C/text%3E%3C/svg%3E">
 </head>
 <body>
     <div class="container">
         <header class="header">
-            <h1><i class="fas fa-bomb"></i> 扫雷游戏</h1>
-            <p class="subtitle">经典扫雷游戏，现代扁平化设计。挑战你的逻辑与速度！</p>
+            <button class="theme-toggle" id="theme-toggle" title="切换深浅色" aria-label="切换深浅色主题">
+                <i class="fas fa-moon"></i>
+            </button>
+            <h1><i class="fas fa-bomb bomb-ico"></i><span class="grad-text">扫雷游戏</span></h1>
+            <p class="subtitle">Gemini 风设计 · 无猜开局 · 挑战你的逻辑与速度</p>
         </header>
 
         <main class="game-area">
@@ -27,8 +38,9 @@
                     </div>
                 </div>
                 <div class="panel-center">
-                    <button class="reset-button" id="reset-btn" title="重新开始">
-                        <i class="fas fa-smile"></i>
+                    <button class="reset-button" id="reset-btn" title="重新开始一局">
+                        <i class="fas fa-rotate-right"></i>
+                        <span>重开</span>
                     </button>
                     <div class="difficulty-select">
                         <select id="difficulty-select">
@@ -43,16 +55,19 @@
                         <span class="counter-label">时间</span>
                         <span class="counter-value" id="timer">000</span>
                     </div>
-                    <div class="counter streak">
-                        <span class="counter-label">连胜</span>
-                        <span class="counter-value" id="streak-counter">0</span>
-                    </div>
                     <button class="hint-button" id="hint-btn" title="提示 (剩余 3 次)">
                         <i class="fas fa-lightbulb"></i>
+                        <span class="hint-label">提示</span>
                         <span class="hint-count" id="hint-count">3</span>
                     </button>
                 </div>
             </section>
+
+            <div class="record-bar">
+                <span class="rec rec-win"><i class="fas fa-fire"></i> 连胜 <b id="win-streak">0</b></span>
+                <span class="rec rec-lose"><i class="fas fa-snowflake"></i> 连败 <b id="lose-streak">0</b></span>
+                <span class="rec rec-best"><i class="fas fa-trophy"></i> 最佳 <b id="best-streak">0</b></span>
+            </div>
 
             <section class="game-grid-container">
                 <div class="grid-wrapper">
@@ -61,69 +76,22 @@
                 <div class="game-status" id="game-status">点击格子开始游戏</div>
             </section>
 
-            <section class="stats-panel">
-                <h2><i class="fas fa-chart-line"></i> 游戏统计</h2>
-                <div class="stats-summary">
-                    <div class="stats-summary-row">
-                        <span class="stats-label">当前连胜/连败:</span>
-                        <span class="stats-value" id="stats-streak-summary">无记录</span>
-                    </div>
-                    <div class="stats-summary-row">
-                        <span class="stats-label">最佳用时:</span>
-                        <span class="stats-value" id="stats-best-time-summary">--:--</span>
-                    </div>
-                    <button class="stats-toggle" id="stats-toggle-btn">详细统计</button>
-                </div>
-                <div class="stats-details" id="stats-details" style="display: none;">
-                    <div class="stats-content">
-                        <div class="stats-row">
-                            <span class="stats-label">当前难度:</span>
-                            <span class="stats-value" id="stats-difficulty">中级</span>
-                        </div>
-                        <div class="stats-row">
-                            <span class="stats-label">总场次:</span>
-                            <span class="stats-value" id="stats-total">0</span>
-                        </div>
-                        <div class="stats-row">
-                            <span class="stats-label">胜率:</span>
-                            <span class="stats-value" id="stats-win-rate">0%</span>
-                        </div>
-                        <div class="stats-row">
-                            <span class="stats-label">当前连胜/连败:</span>
-                            <span class="stats-value" id="stats-streak">无记录</span>
-                        </div>
-                        <div class="stats-row">
-                            <span class="stats-label">最长连胜:</span>
-                            <span class="stats-value" id="stats-max-streak">0</span>
-                        </div>
-                        <div class="stats-row">
-                            <span class="stats-label">最长连败:</span>
-                            <span class="stats-value" id="stats-max-losing-streak">0</span>
-                        </div>
-                        <div class="stats-row">
-                            <span class="stats-label">最佳用时:</span>
-                            <span class="stats-value" id="stats-best-time">--:--</span>
-                        </div>
-                        <div class="stats-row">
-                            <span class="stats-label">平均用时:</span>
-                            <span class="stats-value" id="stats-avg-time">--:--</span>
-                        </div>
-                    </div>
-                    <button class="stats-reset" id="stats-reset-btn">清空统计</button>
-                </div>
-            </section>
-
-            <section class="instructions">
-                <h2><i class="fas fa-info-circle"></i> 游戏说明</h2>
+            <details class="instructions">
+                <summary>
+                    <span class="sum-title"><i class="fas fa-info-circle"></i> 游戏说明</span>
+                    <i class="fas fa-chevron-down sum-chev"></i>
+                </summary>
                 <ul>
                     <li><strong>左键点击</strong>：翻开格子。如果格子是地雷，游戏结束。</li>
                     <li><strong>右键点击</strong>：标记/取消标记地雷（旗帜图标）。</li>
+                    <li><strong>和弦点击</strong>：左键点击已翻开的数字格子，若周围旗帜数等于数字，自动翻开相邻未标记格子。</li>
                     <li><strong>数字</strong>：表示周围8个格子中的地雷数量。</li>
                     <li><strong>空白格子</strong>：自动展开相邻的安全区域。</li>
                     <li><strong>提示按钮</strong>：高亮一个可安全点击的格子，每局最多使用3次。</li>
-                    <li><strong>目标</strong>：标记所有地雷并翻开所有安全格子。</li>
+                    <li><strong>目标</strong>：翻开所有非地雷格子即可获胜。</li>
+                    <li><strong>无猜开局</strong>：第一下点开后，局面保证至少存在一个可纯逻辑推导的下一步。</li>
                 </ul>
-            </section>
+            </details>
         </main>
 
         <footer class="footer">
@@ -133,9 +101,6 @@
         </footer>
     </div>
 
-    <script src="js/utils.js"></script>
-    <script src="js/stats.js"></script>
-    <script src="js/game.js"></script>
-    <script src="js/ui.js"></script>
+    <script src="js/bundle.js"></script>
 </body>
 </html>
