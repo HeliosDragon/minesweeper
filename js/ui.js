@@ -1,11 +1,20 @@
-/* 用户界面模块 - 修复提示 + 连胜显示 */
+/* 用户界面模块 */
 
-// 游戏和工具函数已在全局作用域中定义
-// 直接使用全局变量 Game, DIFFICULTIES, GameState, CellState, CellType, padZero, createElement, addEventListener, getStats, formatTime, formatStreak, clearGameRecords
+import { Game, DIFFICULTIES, GameState, CellState, CellType } from './game.js';
+import { padZero, createElement } from './utils.js';
 
-class UI {
+/* 格子图标（内联 SVG，不依赖外部字体，保证任何环境都可见） */
+const ICONS = {
+    // 地雷
+    bomb: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.6a1.5 1.5 0 0 1 1.5 1.5c0 .55-.3 1.02-.76 1.24.74.27 1.4.7 1.94 1.27a6.2 6.2 0 1 1-9.36 0c.54-.57 1.2-1 1.94-1.27A1.5 1.5 0 0 1 10.5 4.1 1.5 1.5 0 0 1 12 2.6Z"/></svg>',
+    // 旗帜
+    flag: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 3a1 1 0 0 1 1 1v2.3l11.5-2.9a.7.7 0 0 1 .87.68v12.2a.7.7 0 0 1-.87.68L8 15.7V20a1 1 0 1 1-2 0V4a1 1 0 0 1 1-1Z"/></svg>',
+    // 错误标记（×）
+    wrong: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>'
+};
+
+export class UI {
     constructor() {
-        console.log('UI 构造函数开始');
         this.game = null;
         this.gridElement = document.getElementById('grid');
         this.minesCountElement = document.getElementById('mines-count');
@@ -15,88 +24,129 @@ class UI {
         this.difficultySelect = document.getElementById('difficulty-select');
         this.hintButton = document.getElementById('hint-btn');
         this.hintCountElement = document.getElementById('hint-count');
-        this.streakCounterElement = document.getElementById('streak-counter');
-        
-        // 创建连胜图标元素
-        this.streakIconElement = document.createElement('i');
-        this.streakIconElement.classList.add('fas');
-        const parent = this.streakCounterElement?.parentNode;
-        if (parent) {
-            parent.appendChild(this.streakIconElement);
-        }
-        
-        // 统计面板元素
-        this.statsDifficultyElement = document.getElementById('stats-difficulty');
-        this.statsTotalElement = document.getElementById('stats-total');
-        this.statsWinRateElement = document.getElementById('stats-win-rate');
-        this.statsStreakElement = document.getElementById('stats-streak');
-        this.statsMaxStreakElement = document.getElementById('stats-max-streak');
-        this.statsMaxLosingStreakElement = document.getElementById('stats-max-losing-streak');
-        this.statsBestTimeElement = document.getElementById('stats-best-time');
-        this.statsAvgTimeElement = document.getElementById('stats-avg-time');
-        this.statsResetButton = document.getElementById('stats-reset-btn');
-        this.statsStreakSummaryElement = document.getElementById('stats-streak-summary');
-        this.statsBestTimeSummaryElement = document.getElementById('stats-best-time-summary');
-        this.statsToggleBtn = document.getElementById('stats-toggle-btn');
-        this.statsDetailsElement = document.getElementById('stats-details');
-        
-        // 【新增】高亮提示相关
-        this._hintTimeout = null;
-        this._hintedCell = null;
-        
+        this.themeToggle = document.getElementById('theme-toggle');
+        this.winStreakEl = document.getElementById('win-streak');
+        this.loseStreakEl = document.getElementById('lose-streak');
+        this.bestStreakEl = document.getElementById('best-streak');
+
         this.init();
     }
-    
+
     init() {
-        console.log('UI 初始化开始');
+        // 创建游戏实例
         const difficulty = this.difficultySelect.value;
-        console.log('难度:', difficulty);
         this.game = new Game(difficulty);
-        console.log('游戏实例创建完成');
-        
-        // 绑定游戏事件
+
+        // 绑定游戏事件回调
         this.game.onTimerUpdate = (seconds) => this.updateTimer(seconds);
         this.game.onFlagUpdate = (minesRemaining) => this.updateMinesCount(minesRemaining);
         this.game.onGameOver = (win, seconds) => this.showGameOver(win, seconds);
         this.game.onReset = () => this.resetUI();
         this.game.onHintUpdate = (hintsUsed) => this.updateHintCount(hintsUsed);
-        
-        // 【新增】绑定提示应用回调
-        this.game.onHintApplied = (row, col) => {
-            this.highlightHint(row, col);
-        };
-        
+        this.game.onCellRevealed = (row, col) => this.updateCellUI(row, col);
+        this.game.onHintApplied = (row, col) => this.applyHint(row, col);
+
         // 绑定UI事件
         this.resetButton.addEventListener('click', () => this.game.handleReset());
         this.difficultySelect.addEventListener('change', (e) => {
             this.game.handleDifficultyChange(e.target.value);
             this.renderGrid();
-            this.updateStatsDisplay();
         });
         this.hintButton.addEventListener('click', () => this.game.handleHint());
-        this.statsResetButton.addEventListener('click', () => this.clearStats());
-        this.statsToggleBtn.addEventListener('click', () => this.toggleStatsDetails());
-        
+
+        // 主题切换
+        this.setupTheme();
+
+        // 连胜 / 连败记录（localStorage 持久化）
+        this.loadStreak();
+
         // 初始化UI
         this.updateMinesCount(this.game.minesRemaining);
         this.updateTimer(0);
         this.updateHintCount(0);
-        console.log('开始渲染网格');
         this.renderGrid();
         this.updateGameStatus('点击格子开始游戏');
-        this.updateStatsDisplay();
-        console.log('UI 初始化完成');
     }
-    
+
+    /**
+     * 读取连胜 / 连败 / 最佳连胜记录
+     */
+    loadStreak() {
+        let data = { win: 0, lose: 0, best: 0 };
+        try {
+            const raw = localStorage.getItem('ms-streak');
+            if (raw) data = Object.assign(data, JSON.parse(raw));
+        } catch (e) { /* 忽略隐私模式 */ }
+        this.streak = data;
+        this.renderStreak();
+    }
+
+    /**
+     * 保存并记录连胜 / 连败
+     */
+    saveStreak() {
+        try { localStorage.setItem('ms-streak', JSON.stringify(this.streak)); } catch (e) { /* 忽略 */ }
+        this.renderStreak();
+    }
+
+    /**
+     * 渲染连胜 / 连败 / 最佳到界面
+     */
+    renderStreak() {
+        if (this.winStreakEl) this.winStreakEl.textContent = this.streak.win;
+        if (this.loseStreakEl) this.loseStreakEl.textContent = this.streak.lose;
+        if (this.bestStreakEl) this.bestStreakEl.textContent = this.streak.best;
+    }
+
+    /**
+     * 一局结束后更新连胜 / 连败
+     */
+    updateStreak(win) {
+        if (win) {
+            this.streak.win += 1;
+            this.streak.lose = 0;
+            if (this.streak.win > this.streak.best) this.streak.best = this.streak.win;
+        } else {
+            this.streak.lose += 1;
+            this.streak.win = 0;
+        }
+        this.saveStreak();
+    }
+
+    /**
+     * 初始化主题切换（深/浅色手动切换，偏好存入 localStorage）
+     * 主题已在 index.html 内联脚本中首屏应用，这里负责图标同步与点击切换
+     */
+    setupTheme() {
+        if (!this.themeToggle) return;
+        const icon = this.themeToggle.querySelector('i');
+
+        const apply = (theme) => {
+            document.documentElement.setAttribute('data-theme', theme);
+            try { localStorage.setItem('ms-theme', theme); } catch (e) { /* 忽略隐私模式 */ }
+            if (icon) icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            this.themeToggle.setAttribute('title', theme === 'dark' ? '切换到浅色' : '切换到深色');
+        };
+
+        // 同步当前主题对应的图标
+        apply(document.documentElement.getAttribute('data-theme') || 'light');
+
+        this.themeToggle.addEventListener('click', () => {
+            const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            apply(next);
+        });
+    }
+
     /**
      * 渲染整个网格
      */
     renderGrid() {
-        console.log(`渲染网格: ${this.game.rows}行 ${this.game.cols}列`);
         this.gridElement.innerHTML = '';
-        this.gridElement.style.gridTemplateColumns = `repeat(${this.game.cols}, 1fr)`;
+        this.gridElement.style.gridTemplateColumns = `repeat(${this.game.cols}, auto)`;
+
+        // 添加难度CSS类
         this.gridElement.parentElement.className = `grid-wrapper difficulty-${this.game.difficulty}`;
-        
+
         for (let r = 0; r < this.game.rows; r++) {
             for (let c = 0; c < this.game.cols; c++) {
                 const cell = this.game.grid[r][c];
@@ -104,9 +154,8 @@ class UI {
                 this.gridElement.appendChild(cellElement);
             }
         }
-        console.log(`网格渲染完成，共 ${this.game.rows * this.game.cols} 个格子`);
     }
-    
+
     /**
      * 创建单个格子DOM元素
      */
@@ -114,37 +163,29 @@ class UI {
         const cellElement = createElement('div', 'cell');
         cellElement.dataset.row = cell.row;
         cellElement.dataset.col = cell.col;
-        
-        if (cell.state === CellState.REVEALED) {
-            cellElement.classList.add('revealed');
-            if (cell.type === CellType.MINE) {
-                cellElement.classList.add('mine');
-            } else if (cell.type === CellType.NUMBER) {
-                cellElement.classList.add(`number-${cell.neighborMines}`);
-                cellElement.textContent = cell.neighborMines || '';
-            }
-        } else if (cell.state === CellState.FLAGGED) {
-            cellElement.classList.add('flagged');
-        }
-        
+
+        this.applyCellState(cellElement, cell);
+
+        // 左键点击
         cellElement.addEventListener('click', (e) => {
             e.preventDefault();
             this.handleCellClick(cell.row, cell.col, false);
-        }, { passive: false });
-        
+        });
+
+        // 右键标记
         cellElement.addEventListener('contextmenu', (e) => {
             e.preventDefault();
             this.handleCellClick(cell.row, cell.col, true);
-        }, { passive: false });
-        
+        });
+
+        // 触摸事件支持（长按模拟右键）
         cellElement.addEventListener('touchstart', (e) => {
-            e.preventDefault();
             this.handleTouchStart(cell.row, cell.col, e);
         }, { passive: false });
-        
+
         return cellElement;
     }
-    
+
     /**
      * 处理格子点击
      */
@@ -152,91 +193,116 @@ class UI {
         if (isRightClick) {
             this.game.handleCellRightClick(row, col);
         } else {
-            this.game.handleCellClick(row, col);
+            const cell = this.game.grid[row][col];
+            // 已翻开的数字格子：触发和弦点击
+            if (cell.state === CellState.REVEALED && cell.type === CellType.NUMBER) {
+                this.game.chordCell(row, col);
+            } else {
+                this.game.handleCellClick(row, col);
+            }
         }
-        this.renderGrid();
+        this.updateCellUI(row, col);
         this.updateGameStatus();
-        // 游戏状态变化后更新统计
-        if (this.game.state === GameState.WIN || this.game.state === GameState.LOSE) {
-            this.updateStatsDisplay();
-        }
     }
-    
+
     /**
      * 处理触摸开始（长按模拟右键）
      */
     handleTouchStart(row, col, event) {
+        event.preventDefault();
         const touch = event.touches[0];
-        const startTime = Date.now();
+        let longPressTriggered = false;
+
         const touchTimeout = setTimeout(() => {
+            longPressTriggered = true;
             this.game.handleCellRightClick(row, col);
-            this.renderGrid();
+            this.updateCellUI(row, col);
             this.updateGameStatus();
-            event.preventDefault();
         }, 500);
-        
+
         const touchEndHandler = () => {
             clearTimeout(touchTimeout);
-            if (Date.now() - startTime < 500) {
+            if (!longPressTriggered) {
                 this.game.handleCellClick(row, col);
-                this.renderGrid();
+                this.updateCellUI(row, col);
                 this.updateGameStatus();
             }
-            document.removeEventListener('touchend', touchEndHandler);
-            document.removeEventListener('touchmove', touchMoveHandler);
+            cleanup();
         };
-        
+
         const touchMoveHandler = (e) => {
             const currentTouch = e.touches[0];
             const dx = currentTouch.clientX - touch.clientX;
             const dy = currentTouch.clientY - touch.clientY;
             if (Math.sqrt(dx * dx + dy * dy) > 10) {
                 clearTimeout(touchTimeout);
-                document.removeEventListener('touchend', touchEndHandler);
-                document.removeEventListener('touchmove', touchMoveHandler);
+                cleanup();
             }
         };
-        
+
+        const cleanup = () => {
+            document.removeEventListener('touchend', touchEndHandler);
+            document.removeEventListener('touchmove', touchMoveHandler);
+        };
+
         document.addEventListener('touchend', touchEndHandler, { once: true });
         document.addEventListener('touchmove', touchMoveHandler);
     }
-    
+
     /**
-     * 【新增】高亮提示的格子
+     * 将格子状态应用到 DOM 元素
      */
-    highlightHint(row, col) {
-        // 清除之前的高亮
-        if (this._hintedCell) {
-            this._hintedCell.classList.remove('hinted');
+    applyCellState(cellElement, cell) {
+        cellElement.className = 'cell';
+        cellElement.textContent = '';
+
+        if (cell.state === CellState.REVEALED) {
+            cellElement.classList.add('revealed');
+            if (cell.type === CellType.MINE) {
+                cellElement.classList.add('mine');
+                if (cell.exploded) cellElement.classList.add('exploded');
+                cellElement.innerHTML = ICONS.bomb;
+            } else if (cell.wrongFlag) {
+                cellElement.classList.add('wrong-flag');
+                cellElement.innerHTML = ICONS.wrong;
+            } else if (cell.type === CellType.NUMBER) {
+                cellElement.classList.add(`number-${cell.neighborMines}`);
+                cellElement.textContent = cell.neighborMines || '';
+            }
+        } else if (cell.state === CellState.FLAGGED) {
+            cellElement.classList.add('flagged');
+            cellElement.innerHTML = ICONS.flag;
         }
-        
+    }
+
+    /**
+     * 更新单个格子的UI
+     */
+    updateCellUI(row, col) {
+        const cell = this.game.grid[row][col];
         const cellElement = this.gridElement.querySelector(
             `[data-row="${row}"][data-col="${col}"]`
         );
         if (!cellElement) return;
-        
-        // 添加高亮类
-        cellElement.classList.add('hinted');
-        this._hintedCell = cellElement;
-        
-        // 清除之前的定时器
-        if (this._hintTimeout) {
-            clearTimeout(this._hintTimeout);
-        }
-        
-        // 3秒后自动移除高亮
-        this._hintTimeout = setTimeout(() => {
-            if (this._hintedCell) {
-                this._hintedCell.classList.remove('hinted');
-                this._hintedCell = null;
-            }
-            this._hintTimeout = null;
-        }, 3000);
-        
-        // 更新状态栏提示
-        this.updateGameStatus(`💡 提示: 点击 (${row + 1}, ${col + 1}) 位置安全`);
+        this.applyCellState(cellElement, cell);
     }
-    
+
+    /**
+     * 应用提示高亮
+     */
+    applyHint(row, col) {
+        const cellElement = this.gridElement.querySelector(
+            `[data-row="${row}"][data-col="${col}"]`
+        );
+        if (!cellElement) return;
+
+        cellElement.classList.add('hinted');
+
+        setTimeout(() => {
+            cellElement.classList.remove('hinted');
+        }, 2000);
+    }
+
     /**
      * 更新游戏状态显示
      */
@@ -246,7 +312,7 @@ class UI {
             this.gameStatusElement.className = 'game-status';
             return;
         }
-        
+
         let message = '';
         let statusClass = '';
         switch (this.game.state) {
@@ -257,25 +323,28 @@ class UI {
                 message = '游戏中…';
                 break;
             case GameState.WIN:
-                message = `🎉 胜利！用时 ${this.game.elapsedSeconds} 秒`;
+                message = `胜利！用时 ${this.game.elapsedSeconds} 秒`;
                 statusClass = 'win';
                 break;
             case GameState.LOSE:
-                message = '💥 游戏结束！踩到地雷了';
+                message = '游戏结束！踩到地雷了';
                 statusClass = 'lose';
                 break;
         }
         this.gameStatusElement.textContent = message;
         this.gameStatusElement.className = `game-status ${statusClass}`;
+
+        // 更新重置按钮表情
         this.updateResetButtonFace();
     }
-    
+
     /**
      * 更新重置按钮表情
      */
     updateResetButtonFace() {
         const icon = this.resetButton.querySelector('i');
         if (!icon) return;
+
         switch (this.game.state) {
             case GameState.WIN:
                 icon.className = 'fas fa-laugh-beam';
@@ -288,21 +357,21 @@ class UI {
                 break;
         }
     }
-    
+
     /**
      * 更新地雷计数器
      */
     updateMinesCount(count) {
         this.minesCountElement.textContent = padZero(Math.max(0, count), 3);
     }
-    
+
     /**
      * 更新计时器
      */
     updateTimer(seconds) {
-        this.timerElement.textContent = padZero(seconds, 3);
+        this.timerElement.textContent = padZero(Math.min(999, seconds), 3);
     }
-    
+
     /**
      * 更新提示次数
      */
@@ -311,21 +380,33 @@ class UI {
         this.hintCountElement.textContent = remaining;
         this.hintButton.disabled = remaining <= 0;
     }
-    
+
     /**
      * 显示游戏结束
      */
     showGameOver(win, seconds) {
-        this.renderGrid();
+        // 更新连胜 / 连败记录
+        this.updateStreak(win);
+
+        // 更新所有格子（显示地雷、错误标记等）
+        for (let r = 0; r < this.game.rows; r++) {
+            for (let c = 0; c < this.game.cols; c++) {
+                this.updateCellUI(r, c);
+            }
+        }
+
+        // 显示消息
         this.updateGameStatus();
+
+        // 禁用提示按钮
         this.hintButton.disabled = true;
+
+        // 显示胜利动画
         if (win) {
             this.showConfetti();
         }
-        // 【修复】游戏结束时更新统计
-        this.updateStatsDisplay();
     }
-    
+
     /**
      * 重置UI
      */
@@ -336,17 +417,15 @@ class UI {
         this.renderGrid();
         this.updateGameStatus('点击格子开始游戏');
         this.hintButton.disabled = false;
-        // 重置时更新统计
-        this.updateStatsDisplay();
     }
-    
+
     /**
      * 显示庆祝彩花
      */
     showConfetti() {
-        const confettiCount = 100;
-        const colors = ['#4a6fa5', '#28a745', '#dc3545', '#ffc107', '#17a2b8'];
-        
+        const confettiCount = 80;
+        const colors = ['#4796E3', '#9b72d6', '#34C759', '#FF9F0A', '#FF3B30'];
+
         for (let i = 0; i < confettiCount; i++) {
             const confetti = createElement('div', 'confetti');
             confetti.style.cssText = `
@@ -361,91 +440,19 @@ class UI {
                 z-index: 9999;
             `;
             document.body.appendChild(confetti);
-            setTimeout(() => confetti.remove(), 5000);
+            setTimeout(() => confetti.remove(), 6000);
         }
-        
+
+        // 添加CSS动画（仅一次）
         if (!document.getElementById('confetti-style')) {
             const style = createElement('style', null, { id: 'confetti-style' });
             style.textContent = `
                 @keyframes confetti-fall {
                     0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-                    100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+                    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
                 }
             `;
             document.head.appendChild(style);
-        }
-    }
-
-    /**
-     * 【修复】更新统计信息显示 - 确保连胜正确展示
-     */
-    updateStatsDisplay() {
-        const difficulty = this.game.difficulty;
-        const stats = getStats(difficulty);
-        
-        const difficultyNames = {
-            beginner: '初级',
-            intermediate: '中级',
-            expert: '高级'
-        };
-        this.statsDifficultyElement.textContent = difficultyNames[difficulty] || difficulty;
-        this.statsTotalElement.textContent = stats.total;
-        this.statsWinRateElement.textContent = `${stats.winRate}%`;
-        this.statsStreakElement.textContent = formatStreak(stats.currentStreak);
-        this.statsMaxStreakElement.textContent = stats.maxStreak;
-        this.statsMaxLosingStreakElement.textContent = stats.maxLosingStreak;
-        this.statsBestTimeElement.textContent = stats.bestTime > 0 ? formatTime(stats.bestTime) : '--:--';
-        this.statsAvgTimeElement.textContent = stats.averageTime > 0 ? formatTime(stats.averageTime) : '--:--';
-        
-        // 更新摘要显示
-        this.statsStreakSummaryElement.textContent = formatStreak(stats.currentStreak);
-        this.statsBestTimeSummaryElement.textContent = stats.bestTime > 0 ? formatTime(stats.bestTime) : '--:--';
-        
-        // 【修复】更新连胜计数器 - 显示正确的连胜/连败状态
-        if (this.streakCounterElement) {
-            const absStreak = Math.abs(stats.currentStreak);
-            this.streakCounterElement.textContent = absStreak;
-            this.streakCounterElement.parentElement.classList.remove('positive', 'negative');
-            
-            if (stats.currentStreak > 0) {
-                this.streakCounterElement.parentElement.classList.add('positive');
-                this.streakIconElement.className = 'fas fa-trophy';
-                this.streakIconElement.style.opacity = '1';
-                this.streakCounterElement.parentElement.querySelector('.counter-label').textContent = '连胜';
-            } else if (stats.currentStreak < 0) {
-                this.streakCounterElement.parentElement.classList.add('negative');
-                this.streakIconElement.className = 'fas fa-thumbs-down';
-                this.streakIconElement.style.opacity = '1';
-                this.streakCounterElement.parentElement.querySelector('.counter-label').textContent = '连败';
-            } else {
-                this.streakIconElement.style.opacity = '0';
-                this.streakCounterElement.parentElement.querySelector('.counter-label').textContent = '连胜/连败';
-            }
-        }
-    }
-
-    /**
-     * 清空所有统计记录
-     */
-    clearStats() {
-        if (confirm('确定要清空所有游戏统计记录吗？此操作不可撤销。')) {
-            clearGameRecords();
-            this.updateStatsDisplay();
-            alert('统计记录已清空。');
-        }
-    }
-
-    /**
-     * 切换统计详细信息显示
-     */
-    toggleStatsDetails() {
-        const details = this.statsDetailsElement;
-        if (details.style.display === 'none') {
-            details.style.display = 'block';
-            this.statsToggleBtn.textContent = '隐藏统计';
-        } else {
-            details.style.display = 'none';
-            this.statsToggleBtn.textContent = '详细统计';
         }
     }
 }
